@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -47,22 +46,8 @@ TIM_HandleTypeDef htim1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
 
-/* Definitions for CheckStandby */
-osThreadId_t CheckStandbyHandle;
-const osThreadAttr_t CheckStandby_attributes = {
-  .name = "CheckStandby",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
-/* Definitions for SendCan */
-osThreadId_t SendCanHandle;
-const osThreadAttr_t SendCan_attributes = {
-  .name = "SendCan",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
-};
 /* USER CODE BEGIN PV */
-
+extern CAN_FilterTypeDef       sFilterConfig;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -72,9 +57,6 @@ static void MX_CAN1_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM1_Init(void);
-void BlinkLED(void *argument);
-void testcan(void *argument);
-
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -120,44 +102,6 @@ int main(void)
   CanInit(0,0);
   /* USER CODE END 2 */
 
-  /* Init scheduler */
-  osKernelInitialize();
-
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
-
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
-
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
-
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
-
-  /* Create the thread(s) */
-  /* creation of CheckStandby */
-  CheckStandbyHandle = osThreadNew(BlinkLED, NULL, &CheckStandby_attributes);
-
-  /* creation of SendCan */
-  SendCanHandle = osThreadNew(testcan, NULL, &SendCan_attributes);
-
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
-
-  /* USER CODE BEGIN RTOS_EVENTS */
-  /* add events, ... */
-  /* USER CODE END RTOS_EVENTS */
-
-  /* Start scheduler */
-  osKernelStart();
-
-  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -165,6 +109,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_GPIO_TogglePin(testled_GPIO_Port, testled_Pin);
+		uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
+
+		//for(int i=0;i<8;i++){canbuf[i]=0;}
+		sendCan(0, canbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext)
+
+		HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
@@ -190,7 +141,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 4;
+  RCC_OscInitStruct.PLL.PLLM = 6;
   RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
@@ -428,47 +379,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
-
-/* USER CODE BEGIN Header_BlinkLED */
-/**
-  * @brief  Function implementing the CheckStandby thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_BlinkLED */
-void BlinkLED(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-	/* Infinite loop */
-	for(;;)
-	{
-		HAL_GPIO_TogglePin(GPIOC, testled_Pin);
-		osDelay(2000);
-	}
-  /* USER CODE END 5 */
-}
-
-/* USER CODE BEGIN Header_testcan */
-/**
-* @brief Function implementing the SendCan thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_testcan */
-void testcan(void *argument)
-{
-  /* USER CODE BEGIN testcan */
-	/* Infinite loop */
-	for(;;)
-	{
-		uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
-
-		//for(int i=0;i<8;i++){canbuf[i]=0;}
-		sendCan(0, canbuf, 8, 1);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext)
-		osDelay(1000);
-	}
-  /* USER CODE END testcan */
-}
 
 /**
   * @brief  Period elapsed callback in non blocking mode
