@@ -223,8 +223,7 @@ void StartTask04(void *argument)
   /* USER CODE BEGIN StartTask04 */
 	uint32_t lastTime = osKernelGetTickCount();
 
-	uint16_t value[60+24]={0,};
-
+	static int temp = 0;
 	////////////////////////////////
 	ws2812Init(24);
 	//HAL_TIM_PWM_Start_DMA(&htim8, TIM_CHANNEL_1, (uint16_t *)value, 60+24);
@@ -236,40 +235,100 @@ void StartTask04(void *argument)
 		lastTime += 500U;
 		osDelayUntil(lastTime);
 
+		temp++;
+		switch (temp) {
+			case 1:
+				printf("case1\n");
+				ws2812SetColor(0,0,0,1);//index, r, g, b
+				ws2812SetColor(1,0,1,0);//index, r, g, b
+				ws2812SetColor(2,1,0,0);//index, r, g, b
+				ws2812SetColor(3,0,0,1);//index, r, g, b
+				ws2812SetColor(4,0,1,0);//index, r, g, b
+				ws2812SetColor(5,1,0,0);//index, r, g, b
+				ws2812SetColor(6,0,0,1);//index, r, g, b
+				ws2812SetColor(7,0,1,0);//index, r, g, b
+				break;
+			case 2:
+				printf("case2\n");
+				ws2812SetColor(7,0,0,1);//index, r, g, b
+				ws2812SetColor(0,0,1,0);//index, r, g, b
+				ws2812SetColor(1,1,0,0);//index, r, g, b
+				ws2812SetColor(2,0,0,1);//index, r, g, b
+				ws2812SetColor(3,0,1,0);//index, r, g, b
+				ws2812SetColor(4,1,0,0);//index, r, g, b
+				ws2812SetColor(5,0,0,1);//index, r, g, b
+				ws2812SetColor(6,0,1,0);//index, r, g, b
+				break;
+			case 3:
+				printf("case3\n");
+				ws2812SetColor(6,0,0,1);//index, r, g, b
+				ws2812SetColor(7,0,1,0);//index, r, g, b
+				ws2812SetColor(0,1,0,0);//index, r, g, b
+				ws2812SetColor(1,0,0,1);//index, r, g, b
+				ws2812SetColor(2,0,1,0);//index, r, g, b
+				ws2812SetColor(3,1,0,0);//index, r, g, b
+				ws2812SetColor(4,0,0,1);//index, r, g, b
+				ws2812SetColor(5,0,1,0);//index, r, g, b
+				break;
+			case 4:
+				printf("case4\n");
+				ws2812SetColor(5,0,0,1);//index, r, g, b
+				ws2812SetColor(6,0,1,0);//index, r, g, b
+				ws2812SetColor(7,1,0,0);//index, r, g, b
+				ws2812SetColor(0,0,0,1);//index, r, g, b
+				ws2812SetColor(1,0,1,0);//index, r, g, b
+				ws2812SetColor(2,1,0,0);//index, r, g, b
+				ws2812SetColor(3,0,0,1);//index, r, g, b
+				ws2812SetColor(4,0,1,0);//index, r, g, b
+				break;
+			case 5:
+				printf("case5\n");
+				ws2812SetColor(4,0,0,1);//index, r, g, b
+				ws2812SetColor(5,0,1,0);//index, r, g, b
+				ws2812SetColor(6,1,0,0);//index, r, g, b
+				ws2812SetColor(7,0,0,1);//index, r, g, b
+				ws2812SetColor(0,0,1,0);//index, r, g, b
+				ws2812SetColor(1,1,0,0);//index, r, g, b
+				ws2812SetColor(2,0,0,1);//index, r, g, b
+				ws2812SetColor(3,0,1,0);//index, r, g, b
+				break;
+			case 6:
+				printf("case6\n");
+				ws2812SetColor(3,0,0,1);//index, r, g, b
+				ws2812SetColor(4,0,1,0);//index, r, g, b
+				ws2812SetColor(5,1,0,0);//index, r, g, b
+				ws2812SetColor(6,0,0,1);//index, r, g, b
+				ws2812SetColor(7,0,1,0);//index, r, g, b
+				ws2812SetColor(0,1,0,0);//index, r, g, b
+				ws2812SetColor(1,0,0,1);//index, r, g, b
+				ws2812SetColor(2,0,1,0);//index, r, g, b
+				break;
+			case 7:
+				printf("case7\n");
+				ws2812SetColor(2,0,0,1);//index, r, g, b
+				ws2812SetColor(3,0,1,0);//index, r, g, b
+				ws2812SetColor(4,1,0,0);//index, r, g, b
+				ws2812SetColor(5,0,0,1);//index, r, g, b
+				ws2812SetColor(6,0,1,0);//index, r, g, b
+				ws2812SetColor(7,1,0,0);//index, r, g, b
+				ws2812SetColor(0,0,0,1);//index, r, g, b
+				ws2812SetColor(1,0,1,0);//index, r, g, b
+				break;
+			case 8:
+				printf("case8\n");
+				ws2812SetColor(1,0,0,1);//index, r, g, b
+				ws2812SetColor(2,0,1,0);//index, r, g, b
+				ws2812SetColor(3,1,0,0);//index, r, g, b
+				ws2812SetColor(4,0,0,1);//index, r, g, b
+				ws2812SetColor(5,0,1,0);//index, r, g, b
+				ws2812SetColor(6,1,0,0);//index, r, g, b
+				ws2812SetColor(7,0,0,1);//index, r, g, b
+				ws2812SetColor(0,0,1,0);//index, r, g, b
+				temp=1;
+				break;
+		}
 
-		ws2812SetColor(0,0,0,1);//index, r, g, b
-//		value[0]=30;
-//		value[1]=30;
-//		value[2]=30;
-//		value[3]=30;
-//		value[4]=30;
-//		value[5]=30;
-//		value[6]=30;
-//		value[7]=30;
-//
-//		value[8]=30;
-//		value[9]=30;
-//		value[10]=30;
-//		value[11]=30;
-//		value[12]=30;
-//		value[13]=30;
-//		value[14]=30;
-//		value[15]=59;
-//
-//		value[16]=30;
-//		value[17]=30;
-//		value[18]=30;
-//		value[19]=30;
-//		value[20]=30;
-//		value[21]=30;
-//		value[22]=30;
-//		value[23]=30;
-
-
-//		value+=50;
-//		if(value>100){value=0;}
-		//htim8.Instance->CCR1 = value;
-
+		ws2812AllColor(1,1,1);//r, g, b
 		printf("task4\n");
   }
   /* USER CODE END StartTask04 */

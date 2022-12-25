@@ -14,14 +14,16 @@
 extern TIM_HandleTypeDef htim8;
 
 #define BIT_PERIOD      (109)
-#define BIT_HIGH        (59)
-#define BIT_LOW         (30)
+#define BIT_HIGH        (67)
+#define BIT_LOW         (33)
 #define CYCLE_RESET		(60)
+
+#define TOTALNUM		(8)
 
 
 void ws2812Init(uint32_t led_cnt);
 void ws2812SetColor(uint32_t index, uint8_t red, uint8_t green, uint8_t blue);
-
+void ws2812AllColor(uint8_t red, uint8_t green, uint8_t blue);
 
 
 #endif /* INC_APP_WS2812B_H_ */

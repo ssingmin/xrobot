@@ -2,4 +2,4 @@
 ../Core/Src/freertos.c:148:6:StartDefaultTask	24	static
 ../Core/Src/freertos.c:170:6:StartTask02	32	static
 ../Core/Src/freertos.c:197:6:StartTask03	24	static
-../Core/Src/freertos.c:221:6:StartTask04	192	static
+../Core/Src/freertos.c:221:6:StartTask04	24	static
