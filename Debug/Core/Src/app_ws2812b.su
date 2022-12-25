@@ -1,2 +1,2 @@
-../Core/Src/app_ws2812b.c:11:6:ws2812Init	16	static
-../Core/Src/app_ws2812b.c:15:6:ws2812SetColor	16	static
+../Core/Src/app_ws2812b.c:14:6:ws2812Init	16	static
+../Core/Src/app_ws2812b.c:20:6:ws2812SetColor	24	static

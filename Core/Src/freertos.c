@@ -226,7 +226,8 @@ void StartTask04(void *argument)
 	uint16_t value[60+24]={0,};
 
 	////////////////////////////////
-	HAL_TIM_PWM_Start_DMA(&htim8, TIM_CHANNEL_1, (uint16_t *)value, 60+24);
+	ws2812Init(24);
+	//HAL_TIM_PWM_Start_DMA(&htim8, TIM_CHANNEL_1, (uint16_t *)value, 60+24);
 	//HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
 
   /* Infinite loop */
@@ -235,30 +236,34 @@ void StartTask04(void *argument)
 		lastTime += 500U;
 		osDelayUntil(lastTime);
 
-		value[0]=30;
-		value[1]=30;
-		value[2]=30;
-		value[3]=30;
-		value[4]=30;
-		value[5]=30;
-		value[6]=30;
-		value[7]=30;
-		value[8]=30;
-		value[9]=30;
-		value[10]=30;
-		value[11]=30;
-		value[12]=30;
-		value[13]=30;
-		value[14]=30;
-		value[15]=30;
-		value[16]=59;
-		value[17]=59;
-		value[18]=59;
-		value[19]=59;
-		value[20]=59;
-		value[21]=59;
-		value[22]=59;
-		value[23]=59;
+
+		ws2812SetColor(0,0,0,1);//index, r, g, b
+//		value[0]=30;
+//		value[1]=30;
+//		value[2]=30;
+//		value[3]=30;
+//		value[4]=30;
+//		value[5]=30;
+//		value[6]=30;
+//		value[7]=30;
+//
+//		value[8]=30;
+//		value[9]=30;
+//		value[10]=30;
+//		value[11]=30;
+//		value[12]=30;
+//		value[13]=30;
+//		value[14]=30;
+//		value[15]=59;
+//
+//		value[16]=30;
+//		value[17]=30;
+//		value[18]=30;
+//		value[19]=30;
+//		value[20]=30;
+//		value[21]=30;
+//		value[22]=30;
+//		value[23]=30;
 
 
 //		value+=50;

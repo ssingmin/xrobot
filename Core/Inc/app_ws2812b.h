@@ -9,6 +9,9 @@
 #define INC_APP_WS2812B_H_
 
 #include <stdint.h>
+#include "main.h"
+
+extern TIM_HandleTypeDef htim8;
 
 #define BIT_PERIOD      (109)
 #define BIT_HIGH        (59)
