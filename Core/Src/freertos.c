@@ -40,6 +40,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+extern TIM_HandleTypeDef htim8;
 
 /* USER CODE END PM */
 
@@ -68,6 +69,13 @@ const osThreadAttr_t UartComm_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for NP_LED */
+osThreadId_t NP_LEDHandle;
+const osThreadAttr_t NP_LED_attributes = {
+  .name = "NP_LED",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -77,6 +85,7 @@ const osThreadAttr_t UartComm_attributes = {
 void StartDefaultTask(void *argument);
 void StartTask02(void *argument);
 void StartTask03(void *argument);
+void StartTask04(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -115,6 +124,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of UartComm */
   UartCommHandle = osThreadNew(StartTask03, NULL, &UartComm_attributes);
+
+  /* creation of NP_LED */
+  NP_LEDHandle = osThreadNew(StartTask04, NULL, &NP_LED_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -160,6 +172,18 @@ void StartTask02(void *argument)
   /* USER CODE BEGIN StartTask02 */
 	uint32_t lastTime = osKernelGetTickCount();
 
+	CanInit(0,0);
+  /* Infinite loop */
+  for(;;)
+  {
+	  uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
+
+	lastTime += 500U;;
+	osDelayUntil(lastTime);
+
+	//for(int i=0;i<8;i++){canbuf[i]=0;}
+	sendCan(0, canbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext
+  }
   /* USER CODE END StartTask02 */
 }
 
@@ -175,9 +199,9 @@ void StartTask03(void *argument)
   /* USER CODE BEGIN StartTask03 */
 	uint32_t lastTime = osKernelGetTickCount();
   /* Infinite loop */
-  for(;;)
+  for(;;)//485 task for nuri motor must change uart port
   {
-	lastTime += 100U;
+	lastTime += 500U;
 	osDelayUntil(lastTime);
 	  //HAL_UART_Transmit(&huart3, "hihi\n", sizeof("hihi\n"), 10);
 	printf("hihihi\n");
@@ -185,6 +209,65 @@ void StartTask03(void *argument)
 
   }
   /* USER CODE END StartTask03 */
+}
+
+/* USER CODE BEGIN Header_StartTask04 */
+/**
+* @brief Function implementing the NP_LED thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask04 */
+void StartTask04(void *argument)
+{
+  /* USER CODE BEGIN StartTask04 */
+	uint32_t lastTime = osKernelGetTickCount();
+
+	uint16_t value[60+24]={0,};
+
+	////////////////////////////////
+	HAL_TIM_PWM_Start_DMA(&htim8, TIM_CHANNEL_1, (uint16_t *)value, 60+24);
+	//HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
+
+  /* Infinite loop */
+  for(;;)
+  {
+		lastTime += 500U;
+		osDelayUntil(lastTime);
+
+		value[0]=30;
+		value[1]=30;
+		value[2]=30;
+		value[3]=30;
+		value[4]=30;
+		value[5]=30;
+		value[6]=30;
+		value[7]=30;
+		value[8]=30;
+		value[9]=30;
+		value[10]=30;
+		value[11]=30;
+		value[12]=30;
+		value[13]=30;
+		value[14]=30;
+		value[15]=30;
+		value[16]=59;
+		value[17]=59;
+		value[18]=59;
+		value[19]=59;
+		value[20]=59;
+		value[21]=59;
+		value[22]=59;
+		value[23]=59;
+
+
+//		value+=50;
+//		if(value>100){value=0;}
+		//htim8.Instance->CCR1 = value;
+
+		printf("task4\n");
+  }
+  /* USER CODE END StartTask04 */
 }
 
 /* Private application code --------------------------------------------------*/
