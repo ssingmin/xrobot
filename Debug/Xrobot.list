@@ -1703,10 +1703,10 @@ void StartTask04(void *argument)
  8000d98:	bf00      	nop
 		}
 
-		ws2812AllColor(1,1,1);//r, g, b
- 8000d9a:	2201      	movs	r2, #1
- 8000d9c:	2101      	movs	r1, #1
- 8000d9e:	2001      	movs	r0, #1
+		ws2812AllColor(0,0,0);//r, g, b
+ 8000d9a:	2200      	movs	r2, #0
+ 8000d9c:	2100      	movs	r1, #0
+ 8000d9e:	2000      	movs	r0, #0
  8000da0:	f7ff fc00 	bl	80005a4 <ws2812AllColor>
 		printf("task4\n");
  8000da4:	480a      	ldr	r0, [pc, #40]	; (8000dd0 <StartTask04+0x3dc>)
@@ -3509,9 +3509,9 @@ void MX_TIM8_Init(void)
  800174e:	4b4d      	ldr	r3, [pc, #308]	; (8001884 <MX_TIM8_Init+0x180>)
  8001750:	2200      	movs	r2, #0
  8001752:	609a      	str	r2, [r3, #8]
-  htim8.Init.Period = 109;
+  htim8.Init.Period = 104;
  8001754:	4b4b      	ldr	r3, [pc, #300]	; (8001884 <MX_TIM8_Init+0x180>)
- 8001756:	226d      	movs	r2, #109	; 0x6d
+ 8001756:	2268      	movs	r2, #104	; 0x68
  8001758:	60da      	str	r2, [r3, #12]
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
  800175a:	4b4a      	ldr	r3, [pc, #296]	; (8001884 <MX_TIM8_Init+0x180>)

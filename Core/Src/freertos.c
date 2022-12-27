@@ -328,7 +328,7 @@ void StartTask04(void *argument)
 				break;
 		}
 
-		ws2812AllColor(1,1,1);//r, g, b
+		ws2812AllColor(0,0,0);//r, g, b
 		printf("task4\n");
   }
   /* USER CODE END StartTask04 */

@@ -13,7 +13,7 @@
 
 extern TIM_HandleTypeDef htim8;
 
-#define BIT_PERIOD      (109)
+#define BIT_PERIOD      (104)
 #define BIT_HIGH        (67)
 #define BIT_LOW         (33)
 #define CYCLE_RESET		(60)
