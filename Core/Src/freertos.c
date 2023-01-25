@@ -40,6 +40,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim8;
 
 /* USER CODE END PM */
@@ -76,6 +77,13 @@ const osThreadAttr_t NP_LED_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for fancntl */
+osThreadId_t fancntlHandle;
+const osThreadAttr_t fancntl_attributes = {
+  .name = "fancntl",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -86,6 +94,7 @@ void StartDefaultTask(void *argument);
 void StartTask02(void *argument);
 void StartTask03(void *argument);
 void StartTask04(void *argument);
+void StartTask05(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -128,6 +137,9 @@ void MX_FREERTOS_Init(void) {
   /* creation of NP_LED */
   NP_LEDHandle = osThreadNew(StartTask04, NULL, &NP_LED_attributes);
 
+  /* creation of fancntl */
+  fancntlHandle = osThreadNew(StartTask05, NULL, &fancntl_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -148,6 +160,7 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+	//StartTask01 is related gpio toggle for state check //
 	uint32_t lastTime = osKernelGetTickCount();
 
   /* Infinite loop */
@@ -170,6 +183,7 @@ void StartDefaultTask(void *argument)
 void StartTask02(void *argument)
 {
   /* USER CODE BEGIN StartTask02 */
+	//StartTask02 is related CAN communication. //
 	uint32_t lastTime = osKernelGetTickCount();
 
 	CanInit(0,0);
@@ -197,14 +211,19 @@ void StartTask02(void *argument)
 void StartTask03(void *argument)
 {
   /* USER CODE BEGIN StartTask03 */
+	//StartTask03 is related 485 task for nuri motor. must change uart port //
+
+	char testarr[10]={1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 	uint32_t lastTime = osKernelGetTickCount();
   /* Infinite loop */
-  for(;;)//485 task for nuri motor must change uart port
+  for(;;)
   {
 	lastTime += 500U;
 	osDelayUntil(lastTime);
 	  //HAL_UART_Transmit(&huart3, "hihi\n", sizeof("hihi\n"), 10);
-	printf("hihihi\n");
+	//printf("hihihi\n");
+	ServoMotor_write(testarr);
+
     //osDelayUntil(&lastTime, 1000);
 
   }
@@ -221,6 +240,7 @@ void StartTask03(void *argument)
 void StartTask04(void *argument)
 {
   /* USER CODE BEGIN StartTask04 */
+	//StartTask04 is related ws2812b//
 	uint32_t lastTime = osKernelGetTickCount();
 
 	static int temp = 0;
@@ -332,6 +352,33 @@ void StartTask04(void *argument)
 		printf("task4\n");
   }
   /* USER CODE END StartTask04 */
+}
+
+/* USER CODE BEGIN Header_StartTask05 */
+/**
+* @brief Function implementing the fancntl thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask05 */
+void StartTask05(void *argument)
+{
+  /* USER CODE BEGIN StartTask05 */
+	uint32_t lastTime = osKernelGetTickCount();
+	//HAL_TIM_PWM_Start_DMA
+	//HAL_TIMEx_OCN_Start(&htim1, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  /* Infinite loop */
+  for(;;)
+  {
+	lastTime += 500U;;
+	osDelayUntil(lastTime);
+
+	htim1.Instance->CCR1 = 50;
+	printf("task5\n");
+
+  }
+  /* USER CODE END StartTask05 */
 }
 
 /* Private application code --------------------------------------------------*/
