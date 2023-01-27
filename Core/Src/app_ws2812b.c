@@ -11,7 +11,7 @@
 uint16_t g_led_data[(TOTALNUM*24)+CYCLE_RESET]={0,};//CYCLE_RESET of data = 0, not BIT_HIGH or BIT_LOW
 
 
-void ws2812Init(uint32_t led_cnt)
+void ws2812NumOn(uint32_t led_cnt)
 {
 	HAL_TIM_PWM_Start_DMA(&htim8, TIM_CHANNEL_1, (uint16_t *)g_led_data, (TOTALNUM*24)+CYCLE_RESET);
 }

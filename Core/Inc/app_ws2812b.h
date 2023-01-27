@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include "main.h"
+#include "definition.h"
 
 extern TIM_HandleTypeDef htim8;
 
@@ -18,10 +19,10 @@ extern TIM_HandleTypeDef htim8;
 #define BIT_LOW         (33)
 #define CYCLE_RESET		(60)
 
-#define TOTALNUM		(8)
+#define TOTALNUM		(NUM_NPLED)
 
 
-void ws2812Init(uint32_t led_cnt);
+void ws2812NumOn(uint32_t led_cnt);
 void ws2812SetColor(uint32_t index, uint8_t red, uint8_t green, uint8_t blue);
 void ws2812AllColor(uint8_t red, uint8_t green, uint8_t blue);
 

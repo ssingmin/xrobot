@@ -225,9 +225,6 @@ void StartTask03(void *argument)
 
 	HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_SET);
 
-	//HAL_TIM_PWM_Start_DMA(&htim8, TIM_CHANNEL_1, (uint16_t *)g_led_data, (TOTALNUM*24)+CYCLE_RESET);
-
-	//if(HAL_UART_Transmit_DMA(&huart3,testarr, 48)!= HAL_OK){Error_Handler();}
   /* Infinite loop */
   for(;;)
   {
@@ -236,7 +233,6 @@ void StartTask03(void *argument)
 
 	if(HAL_UART_Transmit_DMA(&huart3,testarr, 48)!= HAL_OK){Error_Handler();}
 
-	//ServoMotor_write(testarr);
   }
   /* USER CODE END StartTask03 */
 }
@@ -256,7 +252,7 @@ void StartTask04(void *argument)
 
 	static int temp = 0;
 	////////////////////////////////
-	ws2812Init(24);
+
 
   /* Infinite loop */
   for(;;)
@@ -321,6 +317,9 @@ void StartTask04(void *argument)
 				ws2812SetColor(1,1,0,0);//index, r, g, b
 				ws2812SetColor(2,0,0,1);//index, r, g, b
 				ws2812SetColor(3,0,1,0);//index, r, g, b
+				ws2812SetColor(8,0,0,1);//index, r, g, b
+				ws2812SetColor(9,0,1,0);//index, r, g, b
+
 				break;
 			case 6:
 				printf("case6\n");
@@ -332,6 +331,8 @@ void StartTask04(void *argument)
 				ws2812SetColor(0,1,0,0);//index, r, g, b
 				ws2812SetColor(1,0,0,1);//index, r, g, b
 				ws2812SetColor(2,0,1,0);//index, r, g, b
+				ws2812SetColor(8,0,1,1);//index, r, g, b
+				ws2812SetColor(9,1,1,0);//index, r, g, b
 				break;
 			case 7:
 				printf("case7\n");
@@ -354,11 +355,14 @@ void StartTask04(void *argument)
 				ws2812SetColor(6,1,0,0);//index, r, g, b
 				ws2812SetColor(7,0,0,1);//index, r, g, b
 				ws2812SetColor(0,0,1,0);//index, r, g, b
+				ws2812SetColor(8,1,1,1);//index, r, g, b
+				ws2812SetColor(9,1,1,1);//index, r, g, b
 				temp=1;
 				break;
 		}
 
 		ws2812AllColor(0,0,0);//r, g, b
+		ws2812NumOn(NUM_NPLED);
 		printf("task4\n");
   }
   /* USER CODE END StartTask04 */

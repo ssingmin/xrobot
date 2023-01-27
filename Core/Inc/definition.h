@@ -14,6 +14,7 @@
 #define PERIOD_NP_LED 500U
 #define PERIOD_FAN 500U
 
+#define NUM_NPLED 24
 
 
 
