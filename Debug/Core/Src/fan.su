@@ -1,0 +1,2 @@
+../Core/Src/fan.c:11:6:fanInit	8	static
+../Core/Src/fan.c:17:6:fanOn	16	static

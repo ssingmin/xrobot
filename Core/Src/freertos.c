@@ -26,6 +26,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usart.h"
+#include "fan.h"
+#include "servo_motor.h"
+#include "definition.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -152,7 +155,7 @@ void MX_FREERTOS_Init(void) {
 
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**
-  * @brief  Function implementing the defaultTask thread.
+  * @brief  This indicates overall operational state. The blue led blinks at 1Hz.
   * @param  argument: Not used
   * @retval None
   */
@@ -166,8 +169,9 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	lastTime += 500U;
+	lastTime += PERIOD_STATUS_LED;
 	osDelayUntil(lastTime);
+
 	HAL_GPIO_TogglePin(testled_GPIO_Port, testled_Pin);
   }
   /* USER CODE END StartDefaultTask */
@@ -175,7 +179,7 @@ void StartDefaultTask(void *argument)
 
 /* USER CODE BEGIN Header_StartTask02 */
 /**
-* @brief Function implementing the canTask thread.
+* @brief This task parses the CAN communication. and send can message.
 * @param argument: Not used
 * @retval None
 */
@@ -192,7 +196,7 @@ void StartTask02(void *argument)
   {
 	  uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
 
-	lastTime += 500U;;
+	lastTime += PERIOD_CANCOMM;;
 	osDelayUntil(lastTime);
 
 	//for(int i=0;i<8;i++){canbuf[i]=0;}
@@ -203,29 +207,36 @@ void StartTask02(void *argument)
 
 /* USER CODE BEGIN Header_StartTask03 */
 /**
-* @brief Function implementing the UartComm thread.
+* @brief StartTask03 is related 485 task for nuri motor. must change uart port.
 * @param argument: Not used
 * @retval None
 */
+char testarr[48]={	1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+					11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+					21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+					31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+					41, 42, 43, 44, 45, 46, 47, 48	};
 /* USER CODE END Header_StartTask03 */
 void StartTask03(void *argument)
 {
   /* USER CODE BEGIN StartTask03 */
-	//StartTask03 is related 485 task for nuri motor. must change uart port //
 
-	char testarr[10]={1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 	uint32_t lastTime = osKernelGetTickCount();
+
+	HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_SET);
+
+	//HAL_TIM_PWM_Start_DMA(&htim8, TIM_CHANNEL_1, (uint16_t *)g_led_data, (TOTALNUM*24)+CYCLE_RESET);
+
+	//if(HAL_UART_Transmit_DMA(&huart3,testarr, 48)!= HAL_OK){Error_Handler();}
   /* Infinite loop */
   for(;;)
   {
-	lastTime += 500U;
+	lastTime += PERIOD_STEERING;
 	osDelayUntil(lastTime);
-	  //HAL_UART_Transmit(&huart3, "hihi\n", sizeof("hihi\n"), 10);
-	//printf("hihihi\n");
-	ServoMotor_write(testarr);
 
-    //osDelayUntil(&lastTime, 1000);
+	if(HAL_UART_Transmit_DMA(&huart3,testarr, 48)!= HAL_OK){Error_Handler();}
 
+	//ServoMotor_write(testarr);
   }
   /* USER CODE END StartTask03 */
 }
@@ -246,14 +257,13 @@ void StartTask04(void *argument)
 	static int temp = 0;
 	////////////////////////////////
 	ws2812Init(24);
-	//HAL_TIM_PWM_Start_DMA(&htim8, TIM_CHANNEL_1, (uint16_t *)value, 60+24);
-	//HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
 
   /* Infinite loop */
   for(;;)
   {
-		lastTime += 500U;
+		lastTime += PERIOD_NP_LED;
 		osDelayUntil(lastTime);
+
 
 		temp++;
 		switch (temp) {
@@ -365,16 +375,16 @@ void StartTask05(void *argument)
 {
   /* USER CODE BEGIN StartTask05 */
 	uint32_t lastTime = osKernelGetTickCount();
-	//HAL_TIM_PWM_Start_DMA
-	//HAL_TIMEx_OCN_Start(&htim1, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+	fanInit();
+
   /* Infinite loop */
   for(;;)
   {
-	lastTime += 500U;;
+	lastTime += PERIOD_FAN;
 	osDelayUntil(lastTime);
-
-	htim1.Instance->CCR1 = 50;
+	fanOn(30);
+	//htim1.Instance->CCR1 = 50;
 	printf("task5\n");
 
   }
