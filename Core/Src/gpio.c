@@ -79,9 +79,9 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA4 PA5 PA6 PA7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  /*Configure GPIO pins : PAPin PAPin PAPin PAPin */
+  GPIO_InitStruct.Pin = PS_SIG1_Pin|PS_SIG2_Pin|PS_SIG3_Pin|PS_SIG4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
@@ -99,8 +99,32 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
 }
 
 /* USER CODE BEGIN 2 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if(GPIO_Pin == PS_SIG1_Pin) {
+    	//printf("GPIO_EXTI_Callback PS_SIG1_Pin.\n");
+	}
 
+    if(GPIO_Pin == PS_SIG2_Pin) {	//for touch sensor
+    	//printf("GPIO_EXTI_Callback PS_SIG2_Pin.\n");
+    }
+
+    if(GPIO_Pin == PS_SIG3_Pin) {
+    	//printf("GPIO_EXTI_Callback PS_SIG3_Pin.\n");
+    }
+
+    if(GPIO_Pin == PS_SIG4_Pin) {
+    	//printf("GPIO_EXTI_Callback PS_SIG4_Pin.\n");
+    }
+}
 /* USER CODE END 2 */

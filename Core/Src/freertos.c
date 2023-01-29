@@ -87,6 +87,13 @@ const osThreadAttr_t fancntl_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for IRQ_PSx */
+osThreadId_t IRQ_PSxHandle;
+const osThreadAttr_t IRQ_PSx_attributes = {
+  .name = "IRQ_PSx",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -98,6 +105,7 @@ void StartTask02(void *argument);
 void StartTask03(void *argument);
 void StartTask04(void *argument);
 void StartTask05(void *argument);
+void StartTask06(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -143,6 +151,9 @@ void MX_FREERTOS_Init(void) {
   /* creation of fancntl */
   fancntlHandle = osThreadNew(StartTask05, NULL, &fancntl_attributes);
 
+  /* creation of IRQ_PSx */
+  IRQ_PSxHandle = osThreadNew(StartTask06, NULL, &IRQ_PSx_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -173,6 +184,7 @@ void StartDefaultTask(void *argument)
 	osDelayUntil(lastTime);
 
 	HAL_GPIO_TogglePin(testled_GPIO_Port, testled_Pin);
+	//osDelay(1);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -393,6 +405,29 @@ void StartTask05(void *argument)
 
   }
   /* USER CODE END StartTask05 */
+}
+
+/* USER CODE BEGIN Header_StartTask06 */
+/**
+* @brief Function implementing the IRQ_PSx thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask06 */
+void StartTask06(void *argument)
+{
+  /* USER CODE BEGIN StartTask06 */
+	uint32_t lastTime = osKernelGetTickCount();
+  /* Infinite loop */
+  for(;;)
+  {
+	lastTime += PERIOD_IRQ_PSx;
+	osDelayUntil(lastTime);
+
+
+
+  }
+  /* USER CODE END StartTask06 */
 }
 
 /* Private application code --------------------------------------------------*/

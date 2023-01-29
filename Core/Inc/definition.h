@@ -13,7 +13,7 @@
 #define PERIOD_STEERING 50U
 #define PERIOD_NP_LED 500U
 #define PERIOD_FAN 500U
-
+#define PERIOD_IRQ_PSx 10U
 #define NUM_NPLED 24
 
 

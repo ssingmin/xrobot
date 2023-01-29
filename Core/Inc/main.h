@@ -59,6 +59,18 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define testled_Pin GPIO_PIN_13
 #define testled_GPIO_Port GPIOC
+#define PS_SIG1_Pin GPIO_PIN_4
+#define PS_SIG1_GPIO_Port GPIOA
+#define PS_SIG1_EXTI_IRQn EXTI4_IRQn
+#define PS_SIG2_Pin GPIO_PIN_5
+#define PS_SIG2_GPIO_Port GPIOA
+#define PS_SIG2_EXTI_IRQn EXTI9_5_IRQn
+#define PS_SIG3_Pin GPIO_PIN_6
+#define PS_SIG3_GPIO_Port GPIOA
+#define PS_SIG3_EXTI_IRQn EXTI9_5_IRQn
+#define PS_SIG4_Pin GPIO_PIN_7
+#define PS_SIG4_GPIO_Port GPIOA
+#define PS_SIG4_EXTI_IRQn EXTI9_5_IRQn
 #define RS485_DE_Pin GPIO_PIN_14
 #define RS485_DE_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
