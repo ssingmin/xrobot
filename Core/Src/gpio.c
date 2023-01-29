@@ -109,22 +109,5 @@ void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 2 */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-    if(GPIO_Pin == PS_SIG1_Pin) {
-    	//printf("GPIO_EXTI_Callback PS_SIG1_Pin.\n");
-	}
 
-    if(GPIO_Pin == PS_SIG2_Pin) {	//for touch sensor
-    	//printf("GPIO_EXTI_Callback PS_SIG2_Pin.\n");
-    }
-
-    if(GPIO_Pin == PS_SIG3_Pin) {
-    	//printf("GPIO_EXTI_Callback PS_SIG3_Pin.\n");
-    }
-
-    if(GPIO_Pin == PS_SIG4_Pin) {
-    	//printf("GPIO_EXTI_Callback PS_SIG4_Pin.\n");
-    }
-}
 /* USER CODE END 2 */

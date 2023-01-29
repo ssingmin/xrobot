@@ -92,12 +92,36 @@ osThreadId_t IRQ_PSxHandle;
 const osThreadAttr_t IRQ_PSx_attributes = {
   .name = "IRQ_PSx",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityRealtime7,
+};
+/* Definitions for PSx_SIG_BinSem */
+osSemaphoreId_t PSx_SIG_BinSemHandle;
+const osSemaphoreAttr_t PSx_SIG_BinSem_attributes = {
+  .name = "PSx_SIG_BinSem"
 };
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if(GPIO_Pin == PS_SIG1_Pin) {
+    	//osSemaphoreRelease(PSx_SIG_BinSemHandle);
+    	osThreadFlagsSet(IRQ_PSxHandle, 1);
+    	printf("GPIO_EXTI_Callback PS_SIG1_Pin.\n");
+	}
 
+    if(GPIO_Pin == PS_SIG2_Pin) {	//for touch sensor
+    	//printf("GPIO_EXTI_Callback PS_SIG2_Pin.\n");
+    }
+
+    if(GPIO_Pin == PS_SIG3_Pin) {
+    	//printf("GPIO_EXTI_Callback PS_SIG3_Pin.\n");
+    }
+
+    if(GPIO_Pin == PS_SIG4_Pin) {
+    	//printf("GPIO_EXTI_Callback PS_SIG4_Pin.\n");
+    }
+}
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -122,6 +146,10 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
+
+  /* Create the semaphores(s) */
+  /* creation of PSx_SIG_BinSem */
+  PSx_SIG_BinSemHandle = osSemaphoreNew(1, 1, &PSx_SIG_BinSem_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
@@ -421,9 +449,17 @@ void StartTask06(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	lastTime += PERIOD_IRQ_PSx;
-	osDelayUntil(lastTime);
-
+		//lastTime += PERIOD_IRQ_PSx;
+		//osDelayUntil(lastTime);
+	//	  if(PSx_SIG_BinSemHandle != NULL)
+	//	  	  {
+	//	  		  if(osSemaphoreAcquire(PSx_SIG_BinSemHandle, 0) == osOK)
+	//	  		  {
+	//	  			printf("StartTask06 PS_SIG1_Pin.\n");
+	//	  		  }
+	//	  	  }
+		  osThreadFlagsWait(1, 0, osWaitForever);
+		  printf("StartTask06 PS_SIG1_Pin.\n");
 
 
   }
