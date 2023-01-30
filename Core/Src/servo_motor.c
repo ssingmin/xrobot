@@ -71,6 +71,15 @@ void ServoMotor_write(const char* str)
     HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_RESET);
 }
 
+void ServoMotor_writeDMA(const char* str)
+{
+    HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_SET);
+    osDelay(6);//because transmit_DMA
+    if(HAL_UART_Transmit_DMA(&huart3,str, 48)!= HAL_OK){Error_Handler();}
+    osDelay(6);//because transmit_DMA
+    HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_RESET);
+}
+
 void ServoMotor_control(char direction, unsigned short position, char init)
 {
     //  {0xFF,0xFE,0x00,0x06,0xA2,0x02,0x00,0x23,0x28,0x0A,0,0};
@@ -101,6 +110,33 @@ void ServoMotor_control(char direction, unsigned short position, char init)
     
 }
 
+void DataSetSteering(const char* str, char id, char direction, unsigned short position, char init)
+{
+    char buf[12];
+
+    buf[0]=0xFF;//header
+    buf[1]=0xFE;//header
+    buf[2]=id;//id fixed
+    buf[3]=0x06;//length
+    buf[4]=0x00;//checksum
+    buf[5]=0x02 + init;//mode,  2=position control mode , 3=speed control mode
+    buf[6]=direction;//direction ccw=0x00, cw=0x01
+    buf[7]=(char)(position>>8);//position
+    buf[8]=(char)position;//position
+    if(init == 1){buf[9]=STOP_SPEED;}//stop speed 0.3s>>0.6s 220520>>0.8s 220621
+    else buf[9]=0x1E;//speed, position second = 3s
+    buf[10]=0x00;//reservation
+    buf[11]=0x00;//reservation
+
+    //FF FE 00 06 EC 03 00 00 00 0A
+    //0  1  2  3  4  5  6  7  8  9
+    for(int i=2;i<SERVO_BUFLEN;i++) {checksum_val += buf[i];}//checksum ~(Packet 2 + Packet 3 + Packet 5 + … + Packet N) [1byte]
+    buf[4]=~(checksum_val);//checksum ~(Packet 2 + Packet 3 + Packet 5 + … + Packet N) [1byte]
+    checksum_val=0x00;//checksum
+
+    memcpy(str+(12*id), buf, sizeof(buf));
+
+}
 
 uint32_t ServoMotor_read()
 {

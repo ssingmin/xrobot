@@ -2,5 +2,7 @@
 ../Core/Src/servo_motor.c:44:6:ServoMotor_init	8	static
 ../Core/Src/servo_motor.c:49:6:HAL_UART_RxCpltCallback	16	static
 ../Core/Src/servo_motor.c:57:6:ServoMotor_write	16	static
-../Core/Src/servo_motor.c:74:6:ServoMotor_control	32	static
-../Core/Src/servo_motor.c:105:10:ServoMotor_read	88	static
+../Core/Src/servo_motor.c:74:6:ServoMotor_writeDMA	16	static
+../Core/Src/servo_motor.c:83:6:ServoMotor_control	32	static
+../Core/Src/servo_motor.c:113:6:DataSetSteering	32	static
+../Core/Src/servo_motor.c:141:10:ServoMotor_read	88	static

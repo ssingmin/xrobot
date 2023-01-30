@@ -251,27 +251,28 @@ void StartTask02(void *argument)
 * @param argument: Not used
 * @retval None
 */
-char testarr[48]={	1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-					11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-					21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-					31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-					41, 42, 43, 44, 45, 46, 47, 48	};
+
 /* USER CODE END Header_StartTask03 */
 void StartTask03(void *argument)
 {
+
   /* USER CODE BEGIN StartTask03 */
+	char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
+					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
+					25, 26, 27, 28, 29, 30, 31, 32,	33, 34, 35, 36,		//3 rear right
+					37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48	};	//4 rear left
 
 	uint32_t lastTime = osKernelGetTickCount();
 
-	HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_SET);
 
   /* Infinite loop */
   for(;;)
   {
 	lastTime += PERIOD_STEERING;
 	osDelayUntil(lastTime);
+	DataSetSteering(buf, 3, 0, 0, 0);
 
-	if(HAL_UART_Transmit_DMA(&huart3,testarr, 48)!= HAL_OK){Error_Handler();}
+	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 
   }
   /* USER CODE END StartTask03 */
@@ -445,7 +446,7 @@ void StartTask05(void *argument)
 void StartTask06(void *argument)
 {
   /* USER CODE BEGIN StartTask06 */
-	uint32_t lastTime = osKernelGetTickCount();
+	//uint32_t lastTime = osKernelGetTickCount();
   /* Infinite loop */
   for(;;)
   {

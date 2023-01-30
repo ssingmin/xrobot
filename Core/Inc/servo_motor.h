@@ -31,7 +31,8 @@ extern UART_HandleTypeDef huart3;
 
 void baudrate_reinit();
 void ServoMotor_write(const char* str);
+void ServoMotor_writeDMA(const char* str);
 void ServoMotor_control(char direction, unsigned short position, char init);
 uint32_t ServoMotor_read();
-
+void DataSetSteering(const char* str, char id, char direction, unsigned short position, char init);
 #endif
