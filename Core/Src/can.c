@@ -186,8 +186,30 @@ void sendCan(uint32_t ID, uint8_t *buf, uint8_t len, uint8_t ext)
         dwCheck = HAL_CAN_AddTxMessage(&hcan1, &tCan_Tx_Header, buf, &dwTxMailBox);
         if(dwCheck != HAL_OK){while(1){;}}
     }
+    osDelay(1);
 }
 
+void SDOMsg(uint8_t Node_id,uint16_t index, uint8_t subindex, uint32_t msg, uint8_t len)
+{
+	uint8_t buf[8]={0,};
+
+	switch (len) {
+		case 1:
+			buf[0]=0x2f;	break;	//1byte
+		case 2:
+			buf[0]=0x2b;	break;	//2byte
+		case 3:
+			buf[0]=0x27;	break;	//3byte
+		case 4:
+			buf[0]=0x23;	break;	//4byte
+	}
+
+	memcpy(buf+1,&index,2);	//index
+	buf[3]=subindex;		//subindex
+	memcpy(buf+4,&msg,len);	//data
+
+	sendCan(0x600+Node_id,buf,8,0);
+}
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 {
@@ -195,7 +217,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 
 	if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &g_tCan_Rx_Header, g_uCAN_Rx_Data) != HAL_OK){while(1){;}}
 	FLAG_RxCplt++;
-
 }
 
 

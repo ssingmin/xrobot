@@ -63,29 +63,29 @@ const osThreadAttr_t defaultTask_attributes = {
 osThreadId_t canTaskHandle;
 const osThreadAttr_t canTask_attributes = {
   .name = "canTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityNormal1,
 };
 /* Definitions for UartComm */
 osThreadId_t UartCommHandle;
 const osThreadAttr_t UartComm_attributes = {
   .name = "UartComm",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for NP_LED */
 osThreadId_t NP_LEDHandle;
 const osThreadAttr_t NP_LED_attributes = {
   .name = "NP_LED",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for fancntl */
 osThreadId_t fancntlHandle;
 const osThreadAttr_t fancntl_attributes = {
   .name = "fancntl",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for IRQ_PSx */
 osThreadId_t IRQ_PSxHandle;
@@ -104,9 +104,10 @@ const osSemaphoreAttr_t PSx_SIG_BinSem_attributes = {
 /* USER CODE BEGIN FunctionPrototypes */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+	osThreadFlagsSet(IRQ_PSxHandle, 1);
+
     if(GPIO_Pin == PS_SIG1_Pin) {
     	//osSemaphoreRelease(PSx_SIG_BinSemHandle);
-    	osThreadFlagsSet(IRQ_PSxHandle, 1);
     	printf("GPIO_EXTI_Callback PS_SIG1_Pin.\n");
 	}
 
@@ -231,16 +232,30 @@ void StartTask02(void *argument)
 	uint32_t lastTime = osKernelGetTickCount();
 
 	CanInit(0,0);
+
+//	SDOMsg(1,0x1011, 0x3, 0xf1, 1);
+//	SDOMsg(2,0x2022, 0x33, 0xf1f2, 2);
+//	SDOMsg(3,0x3033, 0x13, 0xf1f2f3, 3);
+//	SDOMsg(4,0x4044, 0x14, 0xf1f2f3f4, 4);
+
   /* Infinite loop */
   for(;;)
   {
-	  uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
-
+	uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
+	int tmp = 0;
 	lastTime += PERIOD_CANCOMM;;
 	osDelayUntil(lastTime);
 
-	//for(int i=0;i<8;i++){canbuf[i]=0;}
-	sendCan(0, canbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext
+	SDOMsg(1,0x1011, 0x3, 0xf1, 1);
+	osDelay(tmp);
+	SDOMsg(2,0x2022, 0x33, 0xf1f2, 2);
+	osDelay(tmp);
+	SDOMsg(3,0x3033, 0x13, 0xf1f2f3, 3);
+	osDelay(tmp);
+	SDOMsg(4,0x4044, 0x14, 0xf1f2f3f4, 4);
+	osDelay(tmp);
+
+
   }
   /* USER CODE END StartTask02 */
 }
@@ -255,7 +270,6 @@ void StartTask02(void *argument)
 /* USER CODE END Header_StartTask03 */
 void StartTask03(void *argument)
 {
-
   /* USER CODE BEGIN StartTask03 */
 	char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left

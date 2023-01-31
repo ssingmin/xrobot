@@ -41,6 +41,10 @@ extern CAN_HandleTypeDef hcan1;
 void MX_CAN1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+void CanInit(uint32_t id, uint32_t mask);
+void sendCan(uint32_t ID, uint8_t *buf, uint8_t len, uint8_t ext);
+void SDOMsg(uint8_t Node_id,uint16_t index, uint8_t subindex, uint32_t msg, uint8_t len);
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle);
 
 /* USER CODE END Prototypes */
 
