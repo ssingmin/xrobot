@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "usart.h"
 #include "fan.h"
+#include "can.h"
 #include "servo_motor.h"
 #include "definition.h"
 /* USER CODE END Includes */
@@ -229,31 +230,27 @@ void StartTask02(void *argument)
 {
   /* USER CODE BEGIN StartTask02 */
 	//StartTask02 is related CAN communication. //
+	uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
+	//MappingPar tmp={{0x1234,0x2341,0x3412,0x4123}, {0x55,0x56,0x65,0x66}, {0x77,0x78,0x87,0x88}, 0x9a, 0xbcde};//example
+
 	uint32_t lastTime = osKernelGetTickCount();
 
 	CanInit(0,0);
 
-//	SDOMsg(1,0x1011, 0x3, 0xf1, 1);
-//	SDOMsg(2,0x2022, 0x33, 0xf1f2, 2);
-//	SDOMsg(3,0x3033, 0x13, 0xf1f2f3, 3);
-//	SDOMsg(4,0x4044, 0x14, 0xf1f2f3f4, 4);
+	PDOMapping(1, 0x1600, tmp, 4);
 
   /* Infinite loop */
   for(;;)
   {
-	uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
-	int tmp = 0;
+
+
 	lastTime += PERIOD_CANCOMM;;
 	osDelayUntil(lastTime);
 
 	SDOMsg(1,0x1011, 0x3, 0xf1, 1);
-	osDelay(tmp);
-	SDOMsg(2,0x2022, 0x33, 0xf1f2, 2);
-	osDelay(tmp);
-	SDOMsg(3,0x3033, 0x13, 0xf1f2f3, 3);
-	osDelay(tmp);
-	SDOMsg(4,0x4044, 0x14, 0xf1f2f3f4, 4);
-	osDelay(tmp);
+//	SDOMsg(2,0x2022, 0x33, 0xf1f2, 2);
+//	SDOMsg(3,0x3033, 0x13, 0xf1f2f3, 3);
+//	SDOMsg(4,0x4044, 0x14, 0xf1f2f3f4, 4);
 
 
   }

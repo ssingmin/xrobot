@@ -21,6 +21,7 @@
 #include "can.h"
 
 /* USER CODE BEGIN 0 */
+
 uint32_t FLAG_RxCplt = 0;
 
 uint8_t					g_uCAN_Rx_Data[8] = {0,};
@@ -210,6 +211,42 @@ void SDOMsg(uint8_t Node_id,uint16_t index, uint8_t subindex, uint32_t msg, uint
 
 	sendCan(0x600+Node_id,buf,8,0);
 }
+
+void NMT_Mode(uint8_t command, uint8_t Node_id)// command 1= pre-operation, 2=operation
+{
+	uint8_t buf[8]={0,};
+
+
+	if(command == 1){buf[0]=0x80;}//enter nmt pre-operational command
+	else{buf[0]=0x01;}//enter nmt operational command for PDO operation
+	buf[1]=Node_id;//node id
+
+	sendCan(0, buf, 8, 0);
+}
+
+
+void PDOMapping(uint8_t Node_id, uint16_t PDO_index, MappingPar Param, uint8_t Num_entry)//entry rr
+{
+	uint32_t tmp=0;
+
+	osDelay(1);
+	//printf("Num_entry!!!: %02X\n", Num_entry);
+
+	NMT_Mode(1, 1);//pre-operation mode
+
+	SDOMsg(Node_id, PDO_index, 0, 0, 1);//clear rpdo0 mapping
+	for(int i=0;i<Num_entry;i++) {//clear rpdo0 mapping, 0x60ff(index) 03(subindex) 20(length)
+		tmp=(0x10000*Param.index[i])+(0x100* Param.subindex[i])+(Param.length[i]);
+		SDOMsg(Node_id, PDO_index, i+1, tmp, 4);
+	}
+	SDOMsg(Node_id, PDO_index-0x200, 1, 0x200+Node_id, 4);//cob-id??
+	SDOMsg(Node_id, PDO_index-0x200, 2, 0xff, 1);//transmission type, fix asynchronous with 0xff
+	SDOMsg(Node_id, PDO_index-0x200, 3+(Param.option*2), Param.option_time, 4);//not necessary 3= inhibit mode, 5=event timer mode
+	SDOMsg(Node_id, PDO_index, 0, 0x01, 1);//clear rpdo0 mapping
+
+	NMT_Mode(2, 1);//operation mode
+}
+
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 {

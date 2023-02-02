@@ -36,6 +36,13 @@ extern CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN Private defines */
 
+typedef struct _MappingPar {
+  uint16_t index[4];
+  uint8_t subindex[4];
+  uint8_t length[4];
+  uint8_t option;
+  uint16_t option_time;
+} MappingPar;
 /* USER CODE END Private defines */
 
 void MX_CAN1_Init(void);
