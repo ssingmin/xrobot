@@ -35,14 +35,18 @@ extern "C" {
 extern CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN Private defines */
+#define PRE_OPERATION 1
+#define OPERATION 2
 
 typedef struct _MappingPar {
   uint16_t index[4];
   uint8_t subindex[4];
   uint8_t length[4];
-  uint8_t option;
+  uint8_t option;//0=inhibit time, 1=event timer
   uint16_t option_time;
 } MappingPar;
+
+
 /* USER CODE END Private defines */
 
 void MX_CAN1_Init(void);

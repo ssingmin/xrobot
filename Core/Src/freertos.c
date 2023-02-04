@@ -231,27 +231,54 @@ void StartTask02(void *argument)
   /* USER CODE BEGIN StartTask02 */
 	//StartTask02 is related CAN communication. //
 	uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
-	//MappingPar tmp={{0x1234,0x2341,0x3412,0x4123}, {0x55,0x56,0x65,0x66}, {0x77,0x78,0x87,0x88}, 0x9a, 0xbcde};//example
+
+	MappingPar vel_RxPDO0={	{0x60ff,0,0,0},//index //target speed
+							{0x03,0,0,0},//subindex //left and rigt target speed combination
+							{0x20,0,0,0},//length //32bit
+							0x01,//option//event timer
+							0x1f4};//option_time //500
+
+	MappingPar vel_TxPDO0={	{0x606C,0,0,0},//index //target speed
+							{0x03,0,0,0},//subindex //left and rigt target speed combination
+							{0x20,0,0,0},//length //32bit
+							0x00,//option//inhibit time
+							0x1f4};//option_time //500
 
 	uint32_t lastTime = osKernelGetTickCount();
 
 	CanInit(0,0);
 
-	PDOMapping(1, 0x1600, tmp, 4);
+	PDOMapping(1, 0x1600, vel_RxPDO0, 1);
+	PDOMapping(2, 0x1600, vel_RxPDO0, 1);
+	PDOMapping(1, 0x1A00, vel_TxPDO0, 1);
+	PDOMapping(2, 0x1A00, vel_TxPDO0, 1);
+
+
+
+	for(int i=0;i<2;i++){
+		SDOMsg(i+1,0x2010, 0x0, 0x01, 1);//Node_id, index,  subindex,  msg,  len//save eeprom
+
+		SDOMsg(i+1,0x6040, 0x0, 0x00, 2);//Node_id, index,  subindex,  msg,  len//Initialization step 0: At this time, the low 4-bit status of 6041 is 0000, motor is released;
+		SDOMsg(i+1,0x6040, 0x0, 0x06, 2);//Node_id, index,  subindex,  msg,  len//Initialization step 1: At this time, the low 4-bit status of 6041 is 0001, motor is released;
+		SDOMsg(i+1,0x6040, 0x0, 0x07, 2);//Node_id, index,  subindex,  msg,  len//Initialization step 2: At this time, the low 4-bit status of 6041 is 0011, motor is enabled;
+		SDOMsg(i+1,0x6040, 0x0, 0x0f, 2);//Node_id, index,  subindex,  msg,  len//Initialization step 3: At this time, the low 4-bit status of 6041 is 0111, motor is enabled;
+
+		SDOMsg(i+1,0x6060, 0x0, 0x03, 1);//Node_id, index,  subindex,  msg,  len
+		SDOMsg(i+1,0x200f, 0x0, 0x01, 2);//Node_id, index,  subindex,  msg,  len
+	}
+
+	//PDOMapping(Node_id, 0x1A01, vel_TxPDO2, 2);
 
   /* Infinite loop */
   for(;;)
   {
 
-
 	lastTime += PERIOD_CANCOMM;;
 	osDelayUntil(lastTime);
 
-	SDOMsg(1,0x1011, 0x3, 0xf1, 1);
-//	SDOMsg(2,0x2022, 0x33, 0xf1f2, 2);
-//	SDOMsg(3,0x3033, 0x13, 0xf1f2f3, 3);
-//	SDOMsg(4,0x4044, 0x14, 0xf1f2f3f4, 4);
-
+	Vel_PDOMsg(1, 0x1600, 0x2, 0x1);
+	Vel_PDOMsg(2, 0x1600, 0x100, 0x200);
+	//SDOMsg(1,0x1011, 0x3, 0xf1, 1);
 
   }
   /* USER CODE END StartTask02 */
