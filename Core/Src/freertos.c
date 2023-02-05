@@ -51,6 +51,7 @@ extern TIM_HandleTypeDef htim8;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+uint8_t PS_SIGx_Pin = 0;//0000 4321
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
@@ -108,19 +109,22 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	osThreadFlagsSet(IRQ_PSxHandle, 1);
 
     if(GPIO_Pin == PS_SIG1_Pin) {
-    	//osSemaphoreRelease(PSx_SIG_BinSemHandle);
-    	printf("GPIO_EXTI_Callback PS_SIG1_Pin.\n");
+    	PS_SIGx_Pin |= 0b00000001;
+    	//printf("GPIO_EXTI_Callback PS_SIG1_Pin.\n");
 	}
 
     if(GPIO_Pin == PS_SIG2_Pin) {	//for touch sensor
+    	PS_SIGx_Pin |= 0b00000010;
     	//printf("GPIO_EXTI_Callback PS_SIG2_Pin.\n");
     }
 
     if(GPIO_Pin == PS_SIG3_Pin) {
+    	PS_SIGx_Pin |= 0b00000100;
     	//printf("GPIO_EXTI_Callback PS_SIG3_Pin.\n");
     }
 
     if(GPIO_Pin == PS_SIG4_Pin) {
+    	PS_SIGx_Pin |= 0b00001000;
     	//printf("GPIO_EXTI_Callback PS_SIG4_Pin.\n");
     }
 }
@@ -232,26 +236,26 @@ void StartTask02(void *argument)
 	//StartTask02 is related CAN communication. //
 	uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
 
-	MappingPar vel_RxPDO0={	{0x60ff,0,0,0},//index //target speed
+	MappingPar vel_RxPDO0={{0x60ff,0,0,0},//index //target speed
 							{0x03,0,0,0},//subindex //left and rigt target speed combination
 							{0x20,0,0,0},//length //32bit
 							0x01,//option//event timer
-							0x1f4};//option_time //500
+							500};//option_time //500
 
-	MappingPar vel_TxPDO0={	{0x606C,0,0,0},//index //target speed
+	MappingPar vel_TxPDO0={{0x606C,0,0,0},//index //target speed
 							{0x03,0,0,0},//subindex //left and rigt target speed combination
 							{0x20,0,0,0},//length //32bit
 							0x00,//option//inhibit time
-							0x1f4};//option_time //500
+							500};//option_time //500
 
 	uint32_t lastTime = osKernelGetTickCount();
 
 	CanInit(0,0);
 
-	PDOMapping(1, 0x1600, vel_RxPDO0, 1);
-	PDOMapping(2, 0x1600, vel_RxPDO0, 1);
-	PDOMapping(1, 0x1A00, vel_TxPDO0, 1);
-	PDOMapping(2, 0x1A00, vel_TxPDO0, 1);
+	PDOMapping(1, 0x1600, vel_RxPDO0, 1,0);//1600이면 이미 txrx가 정해지는데 굳이...다시해...diff에서 틀린거 확인할것
+	PDOMapping(2, 0x1600, vel_RxPDO0, 1,0);
+	PDOMapping(1, 0x1A00, vel_TxPDO0, 1,1);
+	PDOMapping(2, 0x1A00, vel_TxPDO0, 1,1);
 
 
 
@@ -488,17 +492,13 @@ void StartTask06(void *argument)
   /* Infinite loop */
   for(;;)
   {
-		//lastTime += PERIOD_IRQ_PSx;
-		//osDelayUntil(lastTime);
-	//	  if(PSx_SIG_BinSemHandle != NULL)
-	//	  	  {
-	//	  		  if(osSemaphoreAcquire(PSx_SIG_BinSemHandle, 0) == osOK)
-	//	  		  {
-	//	  			printf("StartTask06 PS_SIG1_Pin.\n");
-	//	  		  }
-	//	  	  }
-		  osThreadFlagsWait(1, 0, osWaitForever);
-		  printf("StartTask06 PS_SIG1_Pin.\n");
+	if(PS_SIGx_Pin == 1&&HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin)){printf(" PS_SIG1_Pin.\n");}
+	if(PS_SIGx_Pin == 2&&HAL_GPIO_ReadPin(GPIOA, PS_SIG2_Pin)){printf(" PS_SIG2_Pin.\n");}
+	if(PS_SIGx_Pin == 4&&HAL_GPIO_ReadPin(GPIOA, PS_SIG3_Pin)){printf(" PS_SIG3_Pin.\n");}
+	if(PS_SIGx_Pin == 8&&HAL_GPIO_ReadPin(GPIOA, PS_SIG4_Pin)){printf(" PS_SIG4_Pin.\n");}
+
+	osThreadFlagsWait(1, 0, osWaitForever);
+	printf("StartTask06 PS_SIG1_Pin.\n");
 
 
   }

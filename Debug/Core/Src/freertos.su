@@ -1,8 +1,8 @@
-../Core/Src/freertos.c:106:6:HAL_GPIO_EXTI_Callback	16	static
-../Core/Src/freertos.c:143:6:MX_FREERTOS_Init	8	static
-../Core/Src/freertos.c:204:6:StartDefaultTask	24	static
-../Core/Src/freertos.c:229:6:StartTask02	96	static
-../Core/Src/freertos.c:295:6:StartTask03	88	static
-../Core/Src/freertos.c:326:6:StartTask04	24	static
-../Core/Src/freertos.c:457:6:StartTask05	24	static
-../Core/Src/freertos.c:484:6:StartTask06	16	static
+../Core/Src/freertos.c:107:6:HAL_GPIO_EXTI_Callback	16	static
+../Core/Src/freertos.c:147:6:MX_FREERTOS_Init	8	static
+../Core/Src/freertos.c:208:6:StartDefaultTask	24	static
+../Core/Src/freertos.c:233:6:StartTask02	104	static
+../Core/Src/freertos.c:299:6:StartTask03	88	static
+../Core/Src/freertos.c:330:6:StartTask04	24	static
+../Core/Src/freertos.c:461:6:StartTask05	24	static
+../Core/Src/freertos.c:488:6:StartTask06	16	static

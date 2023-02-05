@@ -226,19 +226,25 @@ void NMT_Mode(uint8_t command, uint8_t Node_id)// command 1= pre-operation, 2=op
 
 
 int PDOMapping(uint8_t Node_id, uint16_t PDO_index, MappingPar Param, uint8_t Num_entry)//entry rr
-{//노드아이디 배열로 바꿈 관련된거 수정할 것
-	uint32_t tmp=0;
+{
+	uint32_t tmp = 0;
+	uint16_t tmp_TxRx = 0;
+	uint8_t type = 0;
 
 	if(Num_entry>=5){printf("Num_entry error: %d\n", Num_entry); return 0;}
-	//
+
+	if(PDO_index>=0x1600&&PDO_index<=0x17ff){tmp_TxRx=0x200+(PDO_index-0x1600); type=0xff;}
+	else if(PDO_index>=0x1a00&&PDO_index<=0x1bff) {tmp_TxRx=0x180+(PDO_index-0x1a00); type=0xfe;}
+	else {printf("PDO_index error: %d\n", PDO_index); return 0;}
+
 	NMT_Mode(PRE_OPERATION, Node_id);//pre-operation mode
 
 	for(int i=0;i<Num_entry;i++) {//clear rpdo0 mapping, 0x60ff(index) 03(subindex) 20(length)
 		SDOMsg(Node_id, PDO_index, 0, 0, 1);//clear rpdo0 mapping
 		tmp=(0x10000*Param.index[i])+(0x100* Param.subindex[i])+(Param.length[i]);
 		SDOMsg(Node_id, PDO_index, i+1, tmp, 4);
-		SDOMsg(Node_id, PDO_index-0x200, 1, 0x200+Node_id, 4);//cob-id??
-		SDOMsg(Node_id, PDO_index-0x200, 2, 0xff, 1);//transmission type, fix asynchronous with 0xff
+		SDOMsg(Node_id, PDO_index-0x200, 1, tmp_TxRx+Node_id, 4);//cob-id??
+		SDOMsg(Node_id, PDO_index-0x200, 2, type, 1);//transmission type, fix asynchronous with 0xff
 		SDOMsg(Node_id, PDO_index-0x200, 3+(Param.option*2), Param.option_time, 4);//not necessary 3= inhibit mode, 5=event timer mode
 		SDOMsg(Node_id, PDO_index, 0, 0x01, 1);//set rpdo0 mapping
 	}

@@ -39,11 +39,11 @@ extern CAN_HandleTypeDef hcan1;
 #define OPERATION 2
 
 typedef struct _MappingPar {
-  uint16_t index[4];
-  uint8_t subindex[4];
-  uint8_t length[4];
-  uint8_t option;//0=inhibit time, 1=event timer
-  uint16_t option_time;
+	uint16_t index[4];
+	uint8_t subindex[4];
+	uint8_t length[4];
+	uint8_t option;//0=inhibit time, 1=event timer
+	uint16_t option_time;
 } MappingPar;
 
 

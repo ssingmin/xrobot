@@ -5,7 +5,7 @@
 ../Core/Src/can.c:167:6:sendCan	56	static
 ../Core/Src/can.c:193:6:SDOMsg	24	static
 ../Core/Src/can.c:215:6:NMT_Mode	24	static
-../Core/Src/can.c:228:5:PDOMapping	40	static
-../Core/Src/can.c:251:6:PDOMsg	16	static
-../Core/Src/can.c:256:6:Vel_PDOMsg	32	static
-../Core/Src/can.c:268:6:HAL_CAN_RxFifo0MsgPendingCallback	16	static
+../Core/Src/can.c:228:5:PDOMapping	48	static
+../Core/Src/can.c:257:6:PDOMsg	16	static
+../Core/Src/can.c:262:6:Vel_PDOMsg	32	static
+../Core/Src/can.c:274:6:HAL_CAN_RxFifo0MsgPendingCallback	16	static
