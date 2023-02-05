@@ -110,22 +110,22 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
     if(GPIO_Pin == PS_SIG1_Pin) {
     	PS_SIGx_Pin |= 0b00000001;
-    	//printf("GPIO_EXTI_Callback PS_SIG1_Pin.\n");
+    	printf("GPIO_EXTI_Callback PS_SIG1_Pin.\n");
 	}
 
-    if(GPIO_Pin == PS_SIG2_Pin) {	//for touch sensor
+    if(GPIO_Pin == PS_SIG2_Pin) {
     	PS_SIGx_Pin |= 0b00000010;
-    	//printf("GPIO_EXTI_Callback PS_SIG2_Pin.\n");
+    	printf("GPIO_EXTI_Callback PS_SIG2_Pin.\n");
     }
 
     if(GPIO_Pin == PS_SIG3_Pin) {
     	PS_SIGx_Pin |= 0b00000100;
-    	//printf("GPIO_EXTI_Callback PS_SIG3_Pin.\n");
+    	printf("GPIO_EXTI_Callback PS_SIG3_Pin.%d: \n", PS_SIGx_Pin);
     }
 
     if(GPIO_Pin == PS_SIG4_Pin) {
     	PS_SIGx_Pin |= 0b00001000;
-    	//printf("GPIO_EXTI_Callback PS_SIG4_Pin.\n");
+    	printf("GPIO_EXTI_Callback PS_SIG4_Pin.\n");
     }
 }
 /* USER CODE END FunctionPrototypes */
@@ -252,7 +252,7 @@ void StartTask02(void *argument)
 
 	CanInit(0,0);
 
-	PDOMapping(1, 0x1600, vel_RxPDO0, 1,0);//1600이면 이미 txrx가 정해지는데 굳이...다시해...diff에서 틀린거 확인할것
+	PDOMapping(1, 0x1600, vel_RxPDO0, 1,0);
 	PDOMapping(2, 0x1600, vel_RxPDO0, 1,0);
 	PDOMapping(1, 0x1A00, vel_TxPDO0, 1,1);
 	PDOMapping(2, 0x1A00, vel_TxPDO0, 1,1);
@@ -306,6 +306,9 @@ void StartTask03(void *argument)
 
 	uint32_t lastTime = osKernelGetTickCount();
 
+	osDelay(1000);
+	HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+	HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
   /* Infinite loop */
   for(;;)
@@ -446,7 +449,7 @@ void StartTask04(void *argument)
 
 		ws2812AllColor(0,0,0);//r, g, b
 		ws2812NumOn(NUM_NPLED);
-		printf("task4\n");
+		//printf("task4\n");
   }
   /* USER CODE END StartTask04 */
 }
@@ -472,7 +475,7 @@ void StartTask05(void *argument)
 	osDelayUntil(lastTime);
 	fanOn(30);
 	//htim1.Instance->CCR1 = 50;
-	printf("task5\n");
+	//printf("task5\n");
 
   }
   /* USER CODE END StartTask05 */
@@ -489,16 +492,25 @@ void StartTask06(void *argument)
 {
   /* USER CODE BEGIN StartTask06 */
 	//uint32_t lastTime = osKernelGetTickCount();
+	osDelay(10);
+	printf("StartTask06 PS_SIG3_Pin.%d: \n", PS_SIGx_Pin);
   /* Infinite loop */
   for(;;)
   {
-	if(PS_SIGx_Pin == 1&&HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin)){printf(" PS_SIG1_Pin.\n");}
-	if(PS_SIGx_Pin == 2&&HAL_GPIO_ReadPin(GPIOA, PS_SIG2_Pin)){printf(" PS_SIG2_Pin.\n");}
-	if(PS_SIGx_Pin == 4&&HAL_GPIO_ReadPin(GPIOA, PS_SIG3_Pin)){printf(" PS_SIG3_Pin.\n");}
-	if(PS_SIGx_Pin == 8&&HAL_GPIO_ReadPin(GPIOA, PS_SIG4_Pin)){printf(" PS_SIG4_Pin.\n");}
+		osDelay(10);
+		printf("StartTask06 PS_SIG3_Pin.%d: \n", PS_SIGx_Pin);
+
+	if((PS_SIGx_Pin&1)&&(HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG1_Pin.\n");}
+	if((PS_SIGx_Pin&1)&&!(HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG11_Pin.\n");}
+	if((PS_SIGx_Pin&2)&&(HAL_GPIO_ReadPin(GPIOA, PS_SIG2_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG2_Pin.\n");}
+	if((PS_SIGx_Pin&2)&&!(HAL_GPIO_ReadPin(GPIOA, PS_SIG2_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG22_Pin.\n");}
+	if((PS_SIGx_Pin&4)&&(HAL_GPIO_ReadPin(GPIOA, PS_SIG3_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG3_Pin.\n");}
+	if((PS_SIGx_Pin&4)&&!(HAL_GPIO_ReadPin(GPIOA, PS_SIG3_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG33_Pin.\n");}
+	if((PS_SIGx_Pin&8)&&(HAL_GPIO_ReadPin(GPIOA, PS_SIG4_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG4_Pin.\n");}
+	if((PS_SIGx_Pin&8)&&!(HAL_GPIO_ReadPin(GPIOA, PS_SIG4_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG44_Pin.\n");}
 
 	osThreadFlagsWait(1, 0, osWaitForever);
-	printf("StartTask06 PS_SIG1_Pin.\n");
+	//printf("StartTask06.\n");
 
 
   }

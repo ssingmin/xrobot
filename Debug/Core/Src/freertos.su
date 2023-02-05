@@ -3,6 +3,6 @@
 ../Core/Src/freertos.c:208:6:StartDefaultTask	24	static
 ../Core/Src/freertos.c:233:6:StartTask02	104	static
 ../Core/Src/freertos.c:299:6:StartTask03	88	static
-../Core/Src/freertos.c:330:6:StartTask04	24	static
-../Core/Src/freertos.c:461:6:StartTask05	24	static
-../Core/Src/freertos.c:488:6:StartTask06	16	static
+../Core/Src/freertos.c:333:6:StartTask04	24	static
+../Core/Src/freertos.c:464:6:StartTask05	24	static
+../Core/Src/freertos.c:491:6:StartTask06	16	static
