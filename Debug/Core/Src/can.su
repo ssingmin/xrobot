@@ -6,6 +6,6 @@
 ../Core/Src/can.c:193:6:SDOMsg	24	static
 ../Core/Src/can.c:215:6:NMT_Mode	24	static
 ../Core/Src/can.c:228:5:PDOMapping	48	static
-../Core/Src/can.c:257:6:PDOMsg	16	static
-../Core/Src/can.c:262:6:Vel_PDOMsg	32	static
-../Core/Src/can.c:274:6:HAL_CAN_RxFifo0MsgPendingCallback	16	static
+../Core/Src/can.c:261:6:PDOMsg	16	static
+../Core/Src/can.c:266:6:Vel_PDOMsg	32	static
+../Core/Src/can.c:278:6:HAL_CAN_RxFifo0MsgPendingCallback	16	static

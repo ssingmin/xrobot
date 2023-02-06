@@ -245,17 +245,18 @@ void StartTask02(void *argument)
 	MappingPar vel_TxPDO0={{0x606C,0,0,0},//index //target speed
 							{0x03,0,0,0},//subindex //left and rigt target speed combination
 							{0x20,0,0,0},//length //32bit
-							0x00,//option//inhibit time
-							500};//option_time //500
+							0x01,//option
+							1000};//option_time //inhibit time 10000, event time 1000 = 500ms
 
 	uint32_t lastTime = osKernelGetTickCount();
 
 	CanInit(0,0);
 
-	PDOMapping(1, 0x1600, vel_RxPDO0, 1,0);
-	PDOMapping(2, 0x1600, vel_RxPDO0, 1,0);
-	PDOMapping(1, 0x1A00, vel_TxPDO0, 1,1);
-	PDOMapping(2, 0x1A00, vel_TxPDO0, 1,1);
+	osDelay(3000);
+	PDOMapping(1, 0x1600, vel_RxPDO0, 1);
+	PDOMapping(2, 0x1600, vel_RxPDO0, 1);
+	PDOMapping(1, 0x1A00, vel_TxPDO0, 1);
+	PDOMapping(2, 0x1A00, vel_TxPDO0, 1);
 
 
 
@@ -272,7 +273,11 @@ void StartTask02(void *argument)
 	}
 
 	//PDOMapping(Node_id, 0x1A01, vel_TxPDO2, 2);
-
+	Vel_PDOMsg(1, 0x1600, 0x2, 0x1);
+	Vel_PDOMsg(2, 0x1600, 0x10, 0x20);
+	osDelay(3000);
+	Vel_PDOMsg(1, 0x1600, 0x0, 0x0);
+	Vel_PDOMsg(2, 0x1600, 0x0, 0x0);
   /* Infinite loop */
   for(;;)
   {
@@ -280,8 +285,7 @@ void StartTask02(void *argument)
 	lastTime += PERIOD_CANCOMM;;
 	osDelayUntil(lastTime);
 
-	Vel_PDOMsg(1, 0x1600, 0x2, 0x1);
-	Vel_PDOMsg(2, 0x1600, 0x100, 0x200);
+
 	//SDOMsg(1,0x1011, 0x3, 0xf1, 1);
 
   }
@@ -534,30 +538,28 @@ void StartTask06(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	osDelay(10);//for printf();
-	printf("StartTask06 PS_SIG3_Pin.%d: \n", PS_SIGx_Pin);
 
 	if(PS_SIGx_Pin&1){//1ch init
-		PS_SIGx_Pin=0; printf(" PS_SIG1_stop.\n");
+		PS_SIGx_Pin=0; //printf(" PS_SIG1_stop.\n");
 		DataSetSteering(buf, 0, SERVO_CCW, 0, 0);
 		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 
 	if(PS_SIGx_Pin&2){//2ch init
-		PS_SIGx_Pin=0; printf(" PS_SIG2_stop.\n");
+		PS_SIGx_Pin=0; //printf(" PS_SIG2_stop.\n");
 		DataSetSteering(buf, 1, SERVO_CCW, 0, 0);
 		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 	if(PS_SIGx_Pin&4){//3ch init
-		PS_SIGx_Pin=0; printf(" PS_SIG3_stop.\n");
+		PS_SIGx_Pin=0; //printf(" PS_SIG3_stop.\n");
 		DataSetSteering(buf, 2, SERVO_CCW, 0, 0);
 		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 	if(PS_SIGx_Pin&8){//4ch init
-		PS_SIGx_Pin=0; printf(" PS_SIG4_stop.\n");
+		PS_SIGx_Pin=0; //printf(" PS_SIG4_stop.\n");
 		DataSetSteering(buf, 3, SERVO_CCW, 0, 0);
 		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		for(int i=0;i<48;i++){buf[i]=0;}//clear buf

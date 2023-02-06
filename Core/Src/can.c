@@ -234,7 +234,11 @@ int PDOMapping(uint8_t Node_id, uint16_t PDO_index, MappingPar Param, uint8_t Nu
 	if(Num_entry>=5){printf("Num_entry error: %d\n", Num_entry); return 0;}
 
 	if(PDO_index>=0x1600&&PDO_index<=0x17ff){tmp_TxRx=0x200+(PDO_index-0x1600); type=0xff;}
-	else if(PDO_index>=0x1a00&&PDO_index<=0x1bff) {tmp_TxRx=0x180+(PDO_index-0x1a00); type=0xfe;}
+	else if(PDO_index>=0x1a00&&PDO_index<=0x1bff) {
+		tmp_TxRx=0x180+(PDO_index-0x1a00);
+		if(Param.option==0){type=0xfe;}
+		else {type=0xff;}
+		}
 	else {printf("PDO_index error: %d\n", PDO_index); return 0;}
 
 	NMT_Mode(PRE_OPERATION, Node_id);//pre-operation mode
@@ -245,7 +249,7 @@ int PDOMapping(uint8_t Node_id, uint16_t PDO_index, MappingPar Param, uint8_t Nu
 		SDOMsg(Node_id, PDO_index, i+1, tmp, 4);
 		SDOMsg(Node_id, PDO_index-0x200, 1, tmp_TxRx+Node_id, 4);//cob-id??
 		SDOMsg(Node_id, PDO_index-0x200, 2, type, 1);//transmission type, fix asynchronous with 0xff
-		SDOMsg(Node_id, PDO_index-0x200, 3+(Param.option*2), Param.option_time, 4);//not necessary 3= inhibit mode, 5=event timer mode
+		SDOMsg(Node_id, PDO_index-0x200, 3+(Param.option*2), Param.option_time, 2);//not necessary 3= inhibit mode, 5=event timer mode
 		SDOMsg(Node_id, PDO_index, 0, 0x01, 1);//set rpdo0 mapping
 	}
 
