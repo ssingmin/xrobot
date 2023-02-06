@@ -309,15 +309,51 @@ void StartTask03(void *argument)
 	osDelay(1000);
 	HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 	HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+	osDelay(1000);
 
+
+	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin)){
+		DataSetSteering(buf, 0, SERVO_CCW, 5, 1);
+		printf("PS_SIG1_Pin init.\n");
+	}
+	else {
+		DataSetSteering(buf, 0, SERVO_CW, 5, 1);
+		printf("PS_SIG1_Pin no init.\n");
+	}
+
+	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG2_Pin)){
+		DataSetSteering(buf, 1, SERVO_CW, 5, 1);
+		printf("PS_SIG2_Pin.\n");
+	}
+	else {
+		DataSetSteering(buf, 1, SERVO_CCW, 5, 1);
+		printf("PS_SIG1_Pin no init.\n");
+	}
+	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG3_Pin)){
+		DataSetSteering(buf, 2, SERVO_CW, 5, 1);
+		printf("PS_SIG3_Pin.\n");
+	}
+	else {
+		DataSetSteering(buf, 2, SERVO_CCW, 5, 1);
+		printf("PS_SIG1_Pin no init.\n");
+	}
+	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG4_Pin)){
+		DataSetSteering(buf, 3, SERVO_CCW, 5, 1);
+		printf("PS_SIG4_Pin.\n");
+	}
+	else {
+		DataSetSteering(buf, 3, SERVO_CW, 5, 1);
+		printf("PS_SIG1_Pin no init.\n");
+	}
+	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
   /* Infinite loop */
   for(;;)
   {
 	lastTime += PERIOD_STEERING;
 	osDelayUntil(lastTime);
-	DataSetSteering(buf, 3, 0, 0, 0);
+	//DataSetSteering(buf, 3, 0, 0, 0);
 
-	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
+	//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 
   }
   /* USER CODE END StartTask03 */
@@ -490,28 +526,45 @@ void StartTask05(void *argument)
 /* USER CODE END Header_StartTask06 */
 void StartTask06(void *argument)
 {
+	char buf[48]={0,};
   /* USER CODE BEGIN StartTask06 */
 	//uint32_t lastTime = osKernelGetTickCount();
-	osDelay(10);
+	osDelay(10);//for printf();
 	printf("StartTask06 PS_SIG3_Pin.%d: \n", PS_SIGx_Pin);
   /* Infinite loop */
   for(;;)
   {
-		osDelay(10);
-		printf("StartTask06 PS_SIG3_Pin.%d: \n", PS_SIGx_Pin);
+	osDelay(10);//for printf();
+	printf("StartTask06 PS_SIG3_Pin.%d: \n", PS_SIGx_Pin);
 
-	if((PS_SIGx_Pin&1)&&(HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG1_Pin.\n");}
-	if((PS_SIGx_Pin&1)&&!(HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG11_Pin.\n");}
-	if((PS_SIGx_Pin&2)&&(HAL_GPIO_ReadPin(GPIOA, PS_SIG2_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG2_Pin.\n");}
-	if((PS_SIGx_Pin&2)&&!(HAL_GPIO_ReadPin(GPIOA, PS_SIG2_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG22_Pin.\n");}
-	if((PS_SIGx_Pin&4)&&(HAL_GPIO_ReadPin(GPIOA, PS_SIG3_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG3_Pin.\n");}
-	if((PS_SIGx_Pin&4)&&!(HAL_GPIO_ReadPin(GPIOA, PS_SIG3_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG33_Pin.\n");}
-	if((PS_SIGx_Pin&8)&&(HAL_GPIO_ReadPin(GPIOA, PS_SIG4_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG4_Pin.\n");}
-	if((PS_SIGx_Pin&8)&&!(HAL_GPIO_ReadPin(GPIOA, PS_SIG4_Pin))){PS_SIGx_Pin=0; printf(" PS_SIG44_Pin.\n");}
+	if(PS_SIGx_Pin&1){//1ch init
+		PS_SIGx_Pin=0; printf(" PS_SIG1_stop.\n");
+		DataSetSteering(buf, 0, SERVO_CCW, 0, 0);
+		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
+		for(int i=0;i<48;i++){buf[i]=0;}//clear buf
+	}
+
+	if(PS_SIGx_Pin&2){//2ch init
+		PS_SIGx_Pin=0; printf(" PS_SIG2_stop.\n");
+		DataSetSteering(buf, 1, SERVO_CCW, 0, 0);
+		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
+		for(int i=0;i<48;i++){buf[i]=0;}//clear buf
+	}
+	if(PS_SIGx_Pin&4){//3ch init
+		PS_SIGx_Pin=0; printf(" PS_SIG3_stop.\n");
+		DataSetSteering(buf, 2, SERVO_CCW, 0, 0);
+		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
+		for(int i=0;i<48;i++){buf[i]=0;}//clear buf
+	}
+	if(PS_SIGx_Pin&8){//4ch init
+		PS_SIGx_Pin=0; printf(" PS_SIG4_stop.\n");
+		DataSetSteering(buf, 3, SERVO_CCW, 0, 0);
+		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
+		for(int i=0;i<48;i++){buf[i]=0;}//clear buf
+	}
 
 	osThreadFlagsWait(1, 0, osWaitForever);
 	//printf("StartTask06.\n");
-
 
   }
   /* USER CODE END StartTask06 */

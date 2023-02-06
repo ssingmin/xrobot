@@ -3,6 +3,10 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
+
+#define SERVO_CW	0
+#define SERVO_CCW	1
+
 #define SERVO_BUFLEN  10  //max length of nurirobot protocol
 
 #define SERVO_ORIGIN_VAL 1050 // 0->open, 2000->close, resolution 0.01 degree
