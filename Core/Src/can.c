@@ -144,7 +144,7 @@ void CanInit(uint32_t id, uint32_t mask)
 	#else//example idmask mode
     sFilterConfig.FilterBank = 0;
     sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
-    sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
+    sFilterConfig.FilterScale = CAN_FILTERSCALE_16BIT;
     sFilterConfig.FilterIdHigh = (id<<3)>>16;
     sFilterConfig.FilterIdLow = ((id<<3)&0xffff)|(0x1<<2);
     sFilterConfig.FilterMaskIdHigh = (mask<<3)>>16;
@@ -275,10 +275,23 @@ void Vel_PDOMsg(uint8_t Node_id, uint16_t PDO_index, uint16_t vel_left, uint16_t
 	PDOMsg(Node_id, PDO_index, buf);
 }
 
+
+void Tor_OnOff(uint8_t OnOff)
+{
+	if(OnOff==1){
+		for(int i=0;i<2;i++){
+			SDOMsg(i+1,0x6040, 0x0, 0x00, 2);//Node_id, index,  subindex,  msg,  len//Initialization step 0: At this time, the low 4-bit status of 6041 is 0000, motor is released;
+			SDOMsg(i+1,0x6040, 0x0, 0x06, 2);//Node_id, index,  subindex,  msg,  len//Initialization step 1: At this time, the low 4-bit status of 6041 is 0001, motor is released;
+			SDOMsg(i+1,0x6040, 0x0, 0x07, 2);//Node_id, index,  subindex,  msg,  len//Initialization step 2: At this time, the low 4-bit status of 6041 is 0011, motor is enabled;
+			SDOMsg(i+1,0x6040, 0x0, 0x0f, 2);//Node_id, index,  subindex,  msg,  len//Initialization step 3: At this time, the low 4-bit status of 6041 is 0111, motor is enabled;
+		}
+	}
+	else{for(int i=0;i<2;i++){SDOMsg(i+1,0x6040, 0x0, 0x00, 2);}}//Node_id, index,  subindex,  msg,  len//Initialization step 0: At this time, the low 4-bit status of 6041 is 0000, motor is released;
+}
+
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 {
   /* Get RX message */
-
 	if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &g_tCan_Rx_Header, g_uCAN_Rx_Data) != HAL_OK){while(1){;}}
 	FLAG_RxCplt++;
 }

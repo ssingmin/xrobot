@@ -30,6 +30,10 @@ extern "C" {
 
 /* USER CODE BEGIN Includes */
 
+extern uint32_t FLAG_RxCplt;
+extern uint8_t					g_uCAN_Rx_Data[8];
+extern CAN_RxHeaderTypeDef 	g_tCan_Rx_Header;
+
 /* USER CODE END Includes */
 
 extern CAN_HandleTypeDef hcan1;
@@ -37,6 +41,12 @@ extern CAN_HandleTypeDef hcan1;
 /* USER CODE BEGIN Private defines */
 #define PRE_OPERATION 1
 #define OPERATION 2
+
+#define  RxPDO0 0x1600
+#define  TxPDO0 0x1A00
+
+#define  TORQUEON 1
+#define  TORQUEOFF 0
 
 typedef struct _MappingPar {
 	uint16_t index[4];

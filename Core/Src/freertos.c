@@ -190,6 +190,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -235,6 +236,7 @@ void StartTask02(void *argument)
   /* USER CODE BEGIN StartTask02 */
 	//StartTask02 is related CAN communication. //
 	uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
+	uint32_t CanId = 0;
 
 	MappingPar vel_RxPDO0={{0x60ff,0,0,0},//index //target speed
 							{0x03,0,0,0},//subindex //left and rigt target speed combination
@@ -246,38 +248,31 @@ void StartTask02(void *argument)
 							{0x03,0,0,0},//subindex //left and rigt target speed combination
 							{0x20,0,0,0},//length //32bit
 							0x01,//option
-							1000};//option_time //inhibit time 10000, event time 1000 = 500ms
+							200};//option_time //inhibit time 10000, event time 1000 = 500ms
 
 	uint32_t lastTime = osKernelGetTickCount();
 
 	CanInit(0,0);
 
 	osDelay(3000);
-	PDOMapping(1, 0x1600, vel_RxPDO0, 1);
-	PDOMapping(2, 0x1600, vel_RxPDO0, 1);
-	PDOMapping(1, 0x1A00, vel_TxPDO0, 1);
-	PDOMapping(2, 0x1A00, vel_TxPDO0, 1);
-
-
+	PDOMapping(1, RxPDO0, vel_RxPDO0, 1);
+	PDOMapping(2, RxPDO0, vel_RxPDO0, 1);
+	PDOMapping(1, TxPDO0, vel_TxPDO0, 1);
+	PDOMapping(2, TxPDO0, vel_TxPDO0, 1);
 
 	for(int i=0;i<2;i++){
 		SDOMsg(i+1,0x2010, 0x0, 0x01, 1);//Node_id, index,  subindex,  msg,  len//save eeprom
-
-		SDOMsg(i+1,0x6040, 0x0, 0x00, 2);//Node_id, index,  subindex,  msg,  len//Initialization step 0: At this time, the low 4-bit status of 6041 is 0000, motor is released;
-		SDOMsg(i+1,0x6040, 0x0, 0x06, 2);//Node_id, index,  subindex,  msg,  len//Initialization step 1: At this time, the low 4-bit status of 6041 is 0001, motor is released;
-		SDOMsg(i+1,0x6040, 0x0, 0x07, 2);//Node_id, index,  subindex,  msg,  len//Initialization step 2: At this time, the low 4-bit status of 6041 is 0011, motor is enabled;
-		SDOMsg(i+1,0x6040, 0x0, 0x0f, 2);//Node_id, index,  subindex,  msg,  len//Initialization step 3: At this time, the low 4-bit status of 6041 is 0111, motor is enabled;
-
-		SDOMsg(i+1,0x6060, 0x0, 0x03, 1);//Node_id, index,  subindex,  msg,  len
-		SDOMsg(i+1,0x200f, 0x0, 0x01, 2);//Node_id, index,  subindex,  msg,  len
+		Tor_OnOff(TORQUEON);
+		SDOMsg(i+1,0x6060, 0x0, 0x03, 1);//Node_id, index,  subindex,  msg,  len//3: Profile velocity mode;
+		SDOMsg(i+1,0x200f, 0x0, 0x01, 2);//Node_id, index,  subindex,  msg,  len//1e: Synchronization control
 	}
 
 	//PDOMapping(Node_id, 0x1A01, vel_TxPDO2, 2);
-	Vel_PDOMsg(1, 0x1600, 0x2, 0x1);
-	Vel_PDOMsg(2, 0x1600, 0x10, 0x20);
+	Vel_PDOMsg(1, TxPDO0, 0x2, 0x1);
+	Vel_PDOMsg(2, TxPDO0, 0x10, 0x20);
 	osDelay(3000);
-	Vel_PDOMsg(1, 0x1600, 0x0, 0x0);
-	Vel_PDOMsg(2, 0x1600, 0x0, 0x0);
+	Vel_PDOMsg(1, TxPDO0, 0x0, 0x0);
+	Vel_PDOMsg(2, TxPDO0, 0x0, 0x0);
   /* Infinite loop */
   for(;;)
   {
@@ -288,6 +283,54 @@ void StartTask02(void *argument)
 
 	//SDOMsg(1,0x1011, 0x3, 0xf1, 1);
 
+	if(FLAG_RxCplt>0)	//real time, check stdid, extid
+	{
+		for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[i];}
+		FLAG_RxCplt--;
+		if(g_tCan_Rx_Header.StdId>g_tCan_Rx_Header.ExtId){CanId = g_tCan_Rx_Header.StdId;}
+		else {CanId = g_tCan_Rx_Header.ExtId;}
+
+		sendCan(1, canbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext)
+
+		switch(CanId)
+		{
+			case 1002:	//parsing
+
+				break;
+
+			case 4001:
+
+				break;
+
+			case 5001:
+
+				break;
+
+			case 2002://only detect can communication of bottom
+
+				break;
+		}
+
+		g_tCan_Rx_Header.StdId=0;
+		g_tCan_Rx_Header.ExtId=0;
+		CanId = 0;
+
+		for(int i=0;i<8;i++){canbuf[i]=0;}
+
+	}
+
+	canbuf[7] = 8;
+	canbuf[6] = 7;
+	canbuf[5] = 6;
+	canbuf[4] = 5;
+	canbuf[3] = 4;
+	canbuf[2] = 3;
+	canbuf[1] = 2;
+	canbuf[0] = 1;
+	osDelay(10);
+	printf("sendcan\n");
+	//sendCan(2, canbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext)
+	for(int i=0;i<8;i++){canbuf[i]=0;}
   }
   /* USER CODE END StartTask02 */
 }
@@ -543,26 +586,26 @@ void StartTask06(void *argument)
 		PS_SIGx_Pin=0; //printf(" PS_SIG1_stop.\n");
 		DataSetSteering(buf, 0, SERVO_CCW, 0, 0);
 		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
-		for(int i=0;i<48;i++){buf[i]=0;}//clear buf
+		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 
 	if(PS_SIGx_Pin&2){//2ch init
 		PS_SIGx_Pin=0; //printf(" PS_SIG2_stop.\n");
 		DataSetSteering(buf, 1, SERVO_CCW, 0, 0);
 		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
-		for(int i=0;i<48;i++){buf[i]=0;}//clear buf
+		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 	if(PS_SIGx_Pin&4){//3ch init
 		PS_SIGx_Pin=0; //printf(" PS_SIG3_stop.\n");
 		DataSetSteering(buf, 2, SERVO_CCW, 0, 0);
 		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
-		for(int i=0;i<48;i++){buf[i]=0;}//clear buf
+		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 	if(PS_SIGx_Pin&8){//4ch init
 		PS_SIGx_Pin=0; //printf(" PS_SIG4_stop.\n");
 		DataSetSteering(buf, 3, SERVO_CCW, 0, 0);
 		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
-		for(int i=0;i<48;i++){buf[i]=0;}//clear buf
+		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 
 	osThreadFlagsWait(1, 0, osWaitForever);
