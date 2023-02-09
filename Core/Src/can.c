@@ -233,9 +233,9 @@ int PDOMapping(uint8_t Node_id, uint16_t PDO_index, MappingPar Param, uint8_t Nu
 
 	if(Num_entry>=5){printf("Num_entry error: %d\n", Num_entry); return 0;}
 
-	if(PDO_index>=0x1600&&PDO_index<=0x17ff){tmp_TxRx=0x200+(PDO_index-0x1600); type=0xff;}
+	if(PDO_index>=0x1600&&PDO_index<=0x17ff){tmp_TxRx=0x200+0x100*(PDO_index-0x1600); type=0xff;}
 	else if(PDO_index>=0x1a00&&PDO_index<=0x1bff) {
-		tmp_TxRx=0x180+(PDO_index-0x1a00);
+		tmp_TxRx=0x180+0x100*(PDO_index-0x1a00);
 		if(Param.option==0){type=0xfe;}
 		else {type=0xff;}
 		}
@@ -260,7 +260,7 @@ int PDOMapping(uint8_t Node_id, uint16_t PDO_index, MappingPar Param, uint8_t Nu
 
 void PDOMsg(uint8_t Node_id, uint16_t PDO_index, uint8_t *buf)
 {
-	sendCan((PDO_index-0x1400)+Node_id,buf,8,0);
+	sendCan((PDO_index-0x1800)+Node_id,buf,8,0);
 }
 
 void Vel_PDOMsg(uint8_t Node_id, uint16_t PDO_index, uint16_t vel_left, uint16_t vel_right)

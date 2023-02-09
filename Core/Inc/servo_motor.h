@@ -3,6 +3,8 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 
+#define SERVO_INIT	1
+#define SERVO_POS	0
 
 #define SERVO_CW	0
 #define SERVO_CCW	1
@@ -27,7 +29,7 @@
 #define SERVO_WARNING_CLOSE  0,300,0  //direction= ccw, position 3 degree, normal //when opening, close 3degree
 /////////////
 
-#define STOP_SPEED 10  //stop speed * 0.1,  // 0.3, 0.5, 0.7
+#define STOP_SPEED 3  //stop speed * 0.1,  // 0.3, 0.5, 0.7
 extern char checksum_val;
 
 extern UART_HandleTypeDef huart2;

@@ -84,7 +84,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  HAL_Delay(2000);
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -94,7 +94,6 @@ int main(void)
 #if 0
 //  must positions Init functions such as from below
   MX_GPIO_Init();
-  MX_GPIO_disableirq();
   MX_CAN1_Init();
 
   MX_TIM1_Init();
@@ -109,7 +108,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_GPIO_disableirq();
   MX_CAN1_Init();
 
   MX_TIM1_Init();

@@ -44,6 +44,7 @@ extern CAN_HandleTypeDef hcan1;
 
 #define  RxPDO0 0x1600
 #define  TxPDO0 0x1A00
+#define  TxPDO1 0x1A01
 
 #define  TORQUEON 1
 #define  TORQUEOFF 0

@@ -30,7 +30,7 @@ Core/Src/app_ws2812b.o: ../Core/Src/app_ws2812b.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- ../Core/Inc/definition.h
+ ../Core/Inc/definition.h ../Core/Inc/can.h
 ../Core/Inc/app_ws2812b.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -64,3 +64,4 @@ Core/Src/app_ws2812b.o: ../Core/Src/app_ws2812b.c \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 ../Core/Inc/definition.h:
+../Core/Inc/can.h:
