@@ -75,8 +75,8 @@ MappingPar vel_TxPDO1={{0x603F,0,0,0},//index //target speed
 uint8_t PS_SIGx_Pin = 0;	//0000 4321
 
 int16_t SteDeg;	//steering degree unit=0.01 degree
-
-
+int8_t ModeABCD=0;
+int8_t STinitdone=0;
 char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
 					25, 26, 27, 28, 29, 30, 31, 32,	33, 34, 35, 36,		//3 rear right
@@ -289,13 +289,10 @@ void StartTask02(void *argument)
 	uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
 	uint32_t CanId = 0;
 
+
 	int16_t Tar_cmd_v_x = 0;
 	int16_t Tar_cmd_v_y = 0;
 	int16_t Tar_cmd_w = 0;
-
-	double Tmp_cmd_v_x = 0;
-	double Tmp_cmd_v_y = 0;
-	double Tmp_cmd_w = 0;
 
 	int16_t Tar_cmd_FL = 0;//Front Left
 	int16_t Tar_cmd_FR = 0;//Front Right
@@ -314,7 +311,7 @@ void StartTask02(void *argument)
 	uint8_t torqueSW = 0;
 
 	//////////////////////////////
-	uint32_t lastTime = osKernelGetTickCount();
+	uint32_t lastTime;
 
 	CanInit(0,0);
 
@@ -330,8 +327,8 @@ void StartTask02(void *argument)
 
 	for(int i=0;i<2;i++){
 		SDOMsg(i+1,0x2010, 0x0, 0x01, 1);//Node_id, index,  subindex,  msg,  len//save eeprom
-		Tor_OnOff(TORQUEON);
 		SDOMsg(i+1,0x6060, 0x0, 0x03, 1);//Node_id, index,  subindex,  msg,  len//3: Profile velocity mode;
+		Tor_OnOff(TORQUEON);
 		SDOMsg(i+1,0x200f, 0x0, 0x01, 2);//Node_id, index,  subindex,  msg,  len//1e: Synchronization control
 	}
 
@@ -342,6 +339,8 @@ void StartTask02(void *argument)
 	Vel_PDOMsg(1, TxPDO0, 0x0, 0x0);
 	Vel_PDOMsg(2, TxPDO0, 0x0, 0x0);
   /* Infinite loop */
+
+	lastTime = osKernelGetTickCount();
   for(;;)
   {
 
@@ -367,6 +366,7 @@ void StartTask02(void *argument)
 //				Tar_cmd_v_y = (int16_t)canbuf[3]<<8 | (int16_t)canbuf[2];
 //				Tar_cmd_w = (int16_t)canbuf[5]<<8 | (int16_t)canbuf[4];
 //				torqueSW = canbuf[6];
+				//Stop_count++;
 				break;
 
 			case 0x181:
@@ -382,8 +382,6 @@ void StartTask02(void *argument)
 
 				break;
 		}
-
-
 
 		g_tCan_Rx_Header.StdId=0;
 		g_tCan_Rx_Header.ExtId=0;
@@ -405,23 +403,45 @@ void StartTask02(void *argument)
 
 	//sendCan(2, canbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext)
 	for(int i=0;i<8;i++){canbuf[i]=0;}
-
-	Tar_cmd_v_x=10;
-	Tar_cmd_v_y=0;
+//for test
+//	Tar_cmd_v_x=10;
+//	Tar_cmd_v_y=0;
+	Tar_cmd_w = 0;
+///////////
 
 	osDelay(10);
-	//printf("ANGLE_RAD: %f\n", ANGLE_RAD);
-	Tar_cmd_FL = CONSTANT_VEL  *  (Tar_cmd_v_x*cos(ANGLE_RAD) + Tar_cmd_v_y*sin(ANGLE_RAD));
-	Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
 
-	SteDeg=rad2deg(ANGLE_RAD);
+	Tar_cmd_v_x=0;
+	Tar_cmd_v_y=0;
+	Tar_cmd_w = 100;
+	if(Tar_cmd_w){
+		Tar_cmd_v_x=0;
+		Tar_cmd_v_y=0;
+		Tar_cmd_FL = Tar_cmd_w/CONSTANT_C_AxC_V;
+		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
+		osDelay(10);
+		printf("Tar_cmd_FL: %d\n", Tar_cmd_FL);
+		SteDeg=rad2deg(ANGLE_VEL);
+		ModeABCD = 2;
+	}
+
+	else{
+
+		Tar_cmd_FL = CONSTANT_VEL  *  (Tar_cmd_v_x*cos(ANGLE_RAD) + Tar_cmd_v_y*sin(ANGLE_RAD));
+		Tar_cmd_FR = -Tar_cmd_FL;
+		Tar_cmd_RL = Tar_cmd_FL;
+		Tar_cmd_RR = -Tar_cmd_FL;
+		SteDeg=rad2deg(ANGLE_RAD);
+		ModeABCD = 1;
+	}
+	//printf("ANGLE_RAD: %f\n", ANGLE_RAD);
 
 	osDelay(20);
-	//printf("Tar_cmd: \n");
-	//printf("Tar_cmd: %d %d %d %d \n", Tar_cmd_RR,Tar_cmd_RL ,Tar_cmd_FR,Tar_cmd_FL);
+	if(STinitdone){
+		Vel_PDOMsg(1, TxPDO0, Tar_cmd_FL, Tar_cmd_FR);
+		Vel_PDOMsg(2, TxPDO0, Tar_cmd_RL, Tar_cmd_RR);
+	}
 
-	Vel_PDOMsg(1, TxPDO0, Tar_cmd_FL, -Tar_cmd_FR);
-	Vel_PDOMsg(2, TxPDO0, Tar_cmd_RL, -Tar_cmd_RR);
 
   }
   /* USER CODE END StartTask02 */
@@ -438,6 +458,7 @@ void StartTask02(void *argument)
 void StartTask03(void *argument)
 {
   /* USER CODE BEGIN StartTask03 */
+	uint32_t lastTime;
 	uint8_t Dir_Rot=0; //direction of rotation
 //	char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 //					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
@@ -492,8 +513,8 @@ void StartTask03(void *argument)
 	osDelay(500);
 	GPIO_disableirq();
 
-
-	uint32_t lastTime = osKernelGetTickCount();
+	STinitdone = 1;
+	lastTime = osKernelGetTickCount();
   /* Infinite loop */
   for(;;)
   {
@@ -501,20 +522,28 @@ void StartTask03(void *argument)
 	osDelayUntil(lastTime);
 
 	printf("SteDeg: %d\n", SteDeg);
-	if(SteDeg<0){
-		SteDeg*=-1;
-		Dir_Rot=SERVO_CW;
+	if(ModeABCD == 1){
+		if(SteDeg<0){
+				SteDeg*=-1;
+				Dir_Rot=SERVO_CW;
+			}
+			else Dir_Rot=SERVO_CCW;
+			if(SteDeg>90){SteDeg=90;}
+			DataSetSteering(buf, 0, Dir_Rot, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, 1, Dir_Rot, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, 2, Dir_Rot, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, 3, Dir_Rot, SteDeg*100, SERVO_POS);
 	}
-	else Dir_Rot=SERVO_CCW;
-	if(SteDeg>90){SteDeg=90;}
-	DataSetSteering(buf, 0, Dir_Rot, SteDeg*100, SERVO_POS);
-	DataSetSteering(buf, 1, Dir_Rot, SteDeg*100, SERVO_POS);
-	DataSetSteering(buf, 2, Dir_Rot, SteDeg*100, SERVO_POS);
-	DataSetSteering(buf, 3, Dir_Rot, SteDeg*100, SERVO_POS);
+
+	if(ModeABCD == 2){
+			DataSetSteering(buf, 0, SERVO_CCW, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, 1, SERVO_CW, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, 2, SERVO_CW, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, 3, SERVO_CCW, SteDeg*100, SERVO_POS);
+	}
+
+
 	osDelay(10);
-
-
-
 	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 
   }
