@@ -288,7 +288,7 @@ void StartTask02(void *argument)
 	//StartTask02 is related CAN communication. //
 	uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
 	uint32_t CanId = 0;
-
+	uint8_t Stop_flag = 0;
 
 	int16_t Tar_cmd_v_x = 0;
 	int16_t Tar_cmd_v_y = 0;
@@ -366,7 +366,7 @@ void StartTask02(void *argument)
 //				Tar_cmd_v_y = (int16_t)canbuf[3]<<8 | (int16_t)canbuf[2];
 //				Tar_cmd_w = (int16_t)canbuf[5]<<8 | (int16_t)canbuf[4];
 //				torqueSW = canbuf[6];
-				//Stop_count++;
+				Stop_flag++;
 				break;
 
 			case 0x181:
@@ -434,6 +434,12 @@ void StartTask02(void *argument)
 		SteDeg=rad2deg(ANGLE_RAD);
 		ModeABCD = 1;
 	}
+
+//	if()
+//	{
+//		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL = 0;
+//		ModeABCD = 4;
+//	}
 	//printf("ANGLE_RAD: %f\n", ANGLE_RAD);
 
 	osDelay(20);
@@ -542,7 +548,12 @@ void StartTask03(void *argument)
 			DataSetSteering(buf, 3, SERVO_CCW, SteDeg*100, SERVO_POS);
 	}
 
-
+	if(ModeABCD == 4){
+			DataSetSteering(buf, 0, SERVO_CW, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, 1, SERVO_CCW, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, 2, SERVO_CCW, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, 3, SERVO_CW, SteDeg*100, SERVO_POS);
+	}
 	osDelay(10);
 	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 
