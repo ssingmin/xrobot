@@ -293,6 +293,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 {
   /* Get RX message */
 	if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &g_tCan_Rx_Header, g_uCAN_Rx_Data) != HAL_OK){while(1){;}}
+	osDelay(10);
+	printf("HAL_CAN_RxFifo0MsgPendingCallback\n");
 	FLAG_RxCplt++;
 }
 

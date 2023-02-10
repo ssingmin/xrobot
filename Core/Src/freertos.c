@@ -75,8 +75,10 @@ MappingPar vel_TxPDO1={{0x603F,0,0,0},//index //target speed
 uint8_t PS_SIGx_Pin = 0;	//0000 4321
 
 int16_t SteDeg;	//steering degree unit=0.01 degree
-int8_t ModeABCD=0;
-int8_t STinitdone=0;
+uint8_t ModeABCD=0;
+uint8_t STinitdone=0;
+uint8_t Stop_flag = 0;
+
 char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
 					25, 26, 27, 28, 29, 30, 31, 32,	33, 34, 35, 36,		//3 rear right
@@ -126,6 +128,11 @@ const osThreadAttr_t IRQ_PSx_attributes = {
   .name = "IRQ_PSx",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityRealtime7,
+};
+/* Definitions for VelStopTimer */
+osTimerId_t VelStopTimerHandle;
+const osTimerAttr_t VelStopTimer_attributes = {
+  .name = "VelStopTimer"
 };
 /* Definitions for PSx_SIG_BinSem */
 osSemaphoreId_t PSx_SIG_BinSemHandle;
@@ -187,6 +194,7 @@ void StartTask03(void *argument);
 void StartTask04(void *argument);
 void StartTask05(void *argument);
 void StartTask06(void *argument);
+void VelStopTimerCallback(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -212,8 +220,13 @@ void MX_FREERTOS_Init(void) {
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* creation of VelStopTimer */
+  VelStopTimerHandle = osTimerNew(VelStopTimerCallback, osTimerPeriodic, NULL, &VelStopTimer_attributes);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
+  osTimerStart(VelStopTimerHandle, 1000);
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -288,7 +301,7 @@ void StartTask02(void *argument)
 	//StartTask02 is related CAN communication. //
 	uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
 	uint32_t CanId = 0;
-	uint8_t Stop_flag = 0;
+
 
 	int16_t Tar_cmd_v_x = 0;
 	int16_t Tar_cmd_v_y = 0;
@@ -319,10 +332,10 @@ void StartTask02(void *argument)
 	PDOMapping(1, RxPDO0, vel_RxPDO0, 1);
 	PDOMapping(2, RxPDO0, vel_RxPDO0, 1);
 
-	PDOMapping(1, TxPDO0, vel_TxPDO0, 1);//event time mode 100ms
-	PDOMapping(2, TxPDO0, vel_TxPDO0, 1);//event time mode
-	PDOMapping(1, TxPDO1, vel_TxPDO1, 1);//inhibit mode 100ms
-	PDOMapping(2, TxPDO1, vel_TxPDO1, 1);//inhibit mode
+//	PDOMapping(1, TxPDO0, vel_TxPDO0, 1);//event time mode 100ms
+//	PDOMapping(2, TxPDO0, vel_TxPDO0, 1);//event time mode
+//	PDOMapping(1, TxPDO1, vel_TxPDO1, 1);//inhibit mode 100ms
+//	PDOMapping(2, TxPDO1, vel_TxPDO1, 1);//inhibit mode
 
 
 	for(int i=0;i<2;i++){
@@ -362,11 +375,12 @@ void StartTask02(void *argument)
 		switch(CanId)//parse
 		{
 			case 0x3E9:
-//				Tar_cmd_v_x = (int16_t)canbuf[1]<<8 | (int16_t)canbuf[0];
-//				Tar_cmd_v_y = (int16_t)canbuf[3]<<8 | (int16_t)canbuf[2];
-//				Tar_cmd_w = (int16_t)canbuf[5]<<8 | (int16_t)canbuf[4];
-//				torqueSW = canbuf[6];
-				Stop_flag++;
+				Tar_cmd_v_x = (int16_t)canbuf[1]<<8 | (int16_t)canbuf[0];
+				Tar_cmd_v_y = (int16_t)canbuf[3]<<8 | (int16_t)canbuf[2];
+				Tar_cmd_w = (int16_t)canbuf[5]<<8 | (int16_t)canbuf[4];
+				torqueSW = canbuf[6];
+				Stop_flag=1;
+				printf("Tar_cmd_v_x: %d\n", Tar_cmd_v_x);
 				break;
 
 			case 0x181:
@@ -406,18 +420,17 @@ void StartTask02(void *argument)
 //for test
 //	Tar_cmd_v_x=10;
 //	Tar_cmd_v_y=0;
-	Tar_cmd_w = 0;
+//	Tar_cmd_w = 0;
 ///////////
 
 	osDelay(10);
 
-	Tar_cmd_v_x=0;
-	Tar_cmd_v_y=0;
-	Tar_cmd_w = 100;
+
 	if(Tar_cmd_w){
 		Tar_cmd_v_x=0;
 		Tar_cmd_v_y=0;
 		Tar_cmd_FL = Tar_cmd_w/CONSTANT_C_AxC_V;
+		if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
 		osDelay(10);
 		printf("Tar_cmd_FL: %d\n", Tar_cmd_FL);
@@ -425,9 +438,11 @@ void StartTask02(void *argument)
 		ModeABCD = 2;
 	}
 
+
 	else{
 
 		Tar_cmd_FL = CONSTANT_VEL  *  (Tar_cmd_v_x*cos(ANGLE_RAD) + Tar_cmd_v_y*sin(ANGLE_RAD));
+		if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
 		Tar_cmd_FR = -Tar_cmd_FL;
 		Tar_cmd_RL = Tar_cmd_FL;
 		Tar_cmd_RR = -Tar_cmd_FL;
@@ -477,36 +492,36 @@ void StartTask03(void *argument)
 	osDelay(100);
 
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin)){
-		DataSetSteering(buf, 0, SERVO_CCW, RPM_2, SERVO_INIT);
+		DataSetSteering(buf, 0, SERVO_CCW, RPM_1, SERVO_INIT);
 		printf("PS_SIG1_Pin CCW init.\n");
 	}
 	else {
-		DataSetSteering(buf, 0, SERVO_CW, RPM_2, SERVO_INIT);
+		DataSetSteering(buf, 0, SERVO_CW, RPM_1, SERVO_INIT);
 		printf("PS_SIG1_Pin CW init.\n");
 	}
 
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG2_Pin)){
-		DataSetSteering(buf, 1, SERVO_CW, RPM_2, SERVO_INIT);
+		DataSetSteering(buf, 1, SERVO_CW, RPM_1, SERVO_INIT);
 		printf("PS_SIG2_Pin CW init.\n");
 	}
 	else {
-		DataSetSteering(buf, 1, SERVO_CCW, RPM_2, SERVO_INIT);
+		DataSetSteering(buf, 1, SERVO_CCW, RPM_1, SERVO_INIT);
 		printf("PS_SIG2_Pin CCW init.\n");
 	}
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG3_Pin)){
-		DataSetSteering(buf, 2, SERVO_CW, RPM_2, SERVO_INIT);
+		DataSetSteering(buf, 2, SERVO_CW, RPM_1, SERVO_INIT);
 		printf("PS_SIG3_Pin CW init.\n");
 	}
 	else {
-		DataSetSteering(buf, 2, SERVO_CCW, RPM_2, SERVO_INIT);
+		DataSetSteering(buf, 2, SERVO_CCW, RPM_1, SERVO_INIT);
 		printf("PS_SIG3_Pin CCW init.\n");
 	}
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG4_Pin)){
-		DataSetSteering(buf, 3, SERVO_CCW, RPM_2, SERVO_INIT);
+		DataSetSteering(buf, 3, SERVO_CCW, RPM_1, SERVO_INIT);
 		printf("PS_SIG4_Pin CCW init.\n");
 	}
 	else {
-		DataSetSteering(buf, 3, SERVO_CW, RPM_2, SERVO_INIT);
+		DataSetSteering(buf, 3, SERVO_CW, RPM_1, SERVO_INIT);
 		printf("PS_SIG4_Pin CW init.\n");
 	}
 	osDelay(1000);
@@ -728,7 +743,6 @@ void StartTask05(void *argument)
 /* USER CODE END Header_StartTask06 */
 void StartTask06(void *argument)
 {
-	//char buf[48]={0,};
   /* USER CODE BEGIN StartTask06 */
 	//uint32_t lastTime = osKernelGetTickCount();
 	osDelay(10);//for printf();
@@ -769,6 +783,15 @@ void StartTask06(void *argument)
 
   }
   /* USER CODE END StartTask06 */
+}
+
+/* VelStopTimerCallback function */
+void VelStopTimerCallback(void *argument)
+{
+  /* USER CODE BEGIN VelStopTimerCallback */
+	if(Stop_flag){Stop_flag = 0;}
+	else {ModeABCD = 4;}
+  /* USER CODE END VelStopTimerCallback */
 }
 
 /* Private application code --------------------------------------------------*/
