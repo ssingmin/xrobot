@@ -84,7 +84,9 @@ char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 					25, 26, 27, 28, 29, 30, 31, 32,	33, 34, 35, 36,		//3 rear right
 					37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48	};	//4 rear left
 
-
+int16_t Tar_cmd_v_x = 0;
+int16_t Tar_cmd_v_y = 0;
+int16_t Tar_cmd_w = 0;
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
@@ -299,13 +301,11 @@ void StartTask02(void *argument)
 {
   /* USER CODE BEGIN StartTask02 */
 	//StartTask02 is related CAN communication. //
-	uint8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
+	int8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
 	uint32_t CanId = 0;
 
 
-	int16_t Tar_cmd_v_x = 0;
-	int16_t Tar_cmd_v_y = 0;
-	int16_t Tar_cmd_w = 0;
+
 
 	int16_t Tar_cmd_FL = 0;//Front Left
 	int16_t Tar_cmd_FR = 0;//Front Right
@@ -367,7 +367,7 @@ void StartTask02(void *argument)
 	{
 		for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[i];}
 		FLAG_RxCplt--;
-		if(g_tCan_Rx_Header.StdId>g_tCan_Rx_Header.ExtId){CanId = g_tCan_Rx_Header.StdId;}
+		if(g_tCan_Rx_Header.StdId>g_tCan_Rx_Header.ExtId){CanId = g_tCan_Rx_Header.StdId;}//꼭체크
 		else {CanId = g_tCan_Rx_Header.ExtId;}
 
 		//sendCan(1, canbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext)
@@ -377,7 +377,7 @@ void StartTask02(void *argument)
 			case 0x3E9:
 				Tar_cmd_v_x = (int16_t)canbuf[1]<<8 | (int16_t)canbuf[0];
 				Tar_cmd_v_y = (int16_t)canbuf[3]<<8 | (int16_t)canbuf[2];
-				Tar_cmd_w = (int16_t)canbuf[5]<<8 | (int16_t)canbuf[4];
+				Tar_cmd_w = canbuf[5]<<8 | (int16_t)canbuf[4];
 				torqueSW = canbuf[6];
 				Stop_flag=1;
 				printf("Tar_cmd_v_x: %d\n", Tar_cmd_v_x);
@@ -418,52 +418,64 @@ void StartTask02(void *argument)
 	//sendCan(2, canbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext)
 	for(int i=0;i<8;i++){canbuf[i]=0;}
 //for test
-//	Tar_cmd_v_x=10;
-//	Tar_cmd_v_y=0;
+//	Tar_cmd_v_x=-100;
+//	Tar_cmd_v_y=10;
 //	Tar_cmd_w = 0;
 ///////////
+	printf("Tar_cmd_v_x: %d\n", Tar_cmd_v_x);
 
 	osDelay(10);
 
-
+	//printf("11Tar_cmd_v_x&Tar_cmd_v_y&Tar_cmd_w%d %d %d\n", Tar_cmd_v_x,Tar_cmd_v_y,Tar_cmd_w);
 	if(Tar_cmd_w){
 		Tar_cmd_v_x=0;
 		Tar_cmd_v_y=0;
+
 		Tar_cmd_FL = Tar_cmd_w/CONSTANT_C_AxC_V;
 		if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
 		osDelay(10);
-		printf("Tar_cmd_FL: %d\n", Tar_cmd_FL);
-		SteDeg=rad2deg(ANGLE_VEL);
+		//printf("Tar_cmd_FL: %d\n", Tar_cmd_FL);
+		//SteDeg=rad2deg(ANGLE_VEL);
 		ModeABCD = 2;
 	}
 
 
 	else{
-
 		Tar_cmd_FL = CONSTANT_VEL  *  (Tar_cmd_v_x*cos(ANGLE_RAD) + Tar_cmd_v_y*sin(ANGLE_RAD));
+		printf("Tar_cmd_FL: %d\n", Tar_cmd_FL);
+
 		if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
 		Tar_cmd_FR = -Tar_cmd_FL;
 		Tar_cmd_RL = Tar_cmd_FL;
 		Tar_cmd_RR = -Tar_cmd_FL;
-		SteDeg=rad2deg(ANGLE_RAD);
-		ModeABCD = 1;
-	}
 
-//	if()
-//	{
-//		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL = 0;
-//		ModeABCD = 4;
-//	}
-	//printf("ANGLE_RAD: %f\n", ANGLE_RAD);
+		if(Tar_cmd_v_x<0){
+			Tar_cmd_FL*=-1;
+			Tar_cmd_FR*=-1;
+			Tar_cmd_RL*=-1;
+			Tar_cmd_RR*=-1;
+		}
+
+		SteDeg=rad2deg(ANGLE_RAD);
+		osDelay(10);
+		//printf("FL FR RL RR: %d %d %d %d \n",Tar_cmd_FL, Tar_cmd_FR, Tar_cmd_RL, Tar_cmd_RR);
+		ModeABCD = 1;
+		printf("rad2deg(%d)\n", rad2deg(ANGLE_RAD));
+	}
+	//printf("33Tar_cmd_v_x&Tar_cmd_v_y&Tar_cmd_w%d %d %d\n", Tar_cmd_v_x,Tar_cmd_v_y,Tar_cmd_w);
+	if((Tar_cmd_v_x==0)&&(Tar_cmd_v_y==0)&&(Tar_cmd_w==0)){
+		ModeABCD = 4;
+		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
+		osDelay(10);
+		//printf("Tar_cmd_v_x&Tar_cmd_v_y&Tar_cmd_w\n");
+	}
 
 	osDelay(20);
 	if(STinitdone){
 		Vel_PDOMsg(1, TxPDO0, Tar_cmd_FL, Tar_cmd_FR);
 		Vel_PDOMsg(2, TxPDO0, Tar_cmd_RL, Tar_cmd_RR);
 	}
-
-
   }
   /* USER CODE END StartTask02 */
 }
@@ -542,32 +554,40 @@ void StartTask03(void *argument)
 	lastTime += PERIOD_STEERING;
 	osDelayUntil(lastTime);
 
-	printf("SteDeg: %d\n", SteDeg);
 	if(ModeABCD == 1){
-		if(SteDeg<0){
-				SteDeg*=-1;
-				Dir_Rot=SERVO_CW;
-			}
-			else Dir_Rot=SERVO_CCW;
-			if(SteDeg>90){SteDeg=90;}
+
+		if(SteDeg == 180||SteDeg == -180){SteDeg = 0;}
+		if(Tar_cmd_v_x==0&&Tar_cmd_v_y>0){SteDeg=90; Dir_Rot=SERVO_CCW;}
+		else if(Tar_cmd_v_x==0&&Tar_cmd_v_y<0){SteDeg=90; Dir_Rot=SERVO_CW;}
+
+		if		((Tar_cmd_v_x>0) && (Tar_cmd_v_y>0)){/*SteDeg*=1;*/		Dir_Rot=SERVO_CCW; osDelay(10); printf("the first quadrant: %d\n", SteDeg);}//the first quadrant
+		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y>0)){SteDeg=180-SteDeg;	Dir_Rot=SERVO_CW; osDelay(10); printf("the second quadrant: %d\n", SteDeg);}//the second quadrant
+		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y<0)){SteDeg=180+SteDeg;	Dir_Rot=SERVO_CCW; osDelay(10); printf("the third quadrant: %d\n", SteDeg);}//the third quadrant
+		else if	((Tar_cmd_v_x>0) && (Tar_cmd_v_y<0)){SteDeg*=-1;		Dir_Rot=SERVO_CW; osDelay(10); printf("the fourth quadrant: %d\n", SteDeg);}//the fourth quadrant
+
+		if((SteDeg>=0) && (SteDeg<=90)){//prevent from angle over range
 			DataSetSteering(buf, 0, Dir_Rot, SteDeg*100, SERVO_POS);
 			DataSetSteering(buf, 1, Dir_Rot, SteDeg*100, SERVO_POS);
 			DataSetSteering(buf, 2, Dir_Rot, SteDeg*100, SERVO_POS);
 			DataSetSteering(buf, 3, Dir_Rot, SteDeg*100, SERVO_POS);
+		}
+
 	}
 
 	if(ModeABCD == 2){
-			DataSetSteering(buf, 0, SERVO_CCW, SteDeg*100, SERVO_POS);
-			DataSetSteering(buf, 1, SERVO_CW, SteDeg*100, SERVO_POS);
-			DataSetSteering(buf, 2, SERVO_CW, SteDeg*100, SERVO_POS);
-			DataSetSteering(buf, 3, SERVO_CCW, SteDeg*100, SERVO_POS);
+		SteDeg=rad2deg(ANGLE_VEL);
+		DataSetSteering(buf, 0, SERVO_CCW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, 1, SERVO_CW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, 2, SERVO_CW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, 3, SERVO_CCW, SteDeg*100, SERVO_POS);
 	}
 
 	if(ModeABCD == 4){
-			DataSetSteering(buf, 0, SERVO_CW, SteDeg*100, SERVO_POS);
-			DataSetSteering(buf, 1, SERVO_CCW, SteDeg*100, SERVO_POS);
-			DataSetSteering(buf, 2, SERVO_CCW, SteDeg*100, SERVO_POS);
-			DataSetSteering(buf, 3, SERVO_CW, SteDeg*100, SERVO_POS);
+		SteDeg=rad2deg(ANGLE_VEL);
+		DataSetSteering(buf, 0, SERVO_CW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, 1, SERVO_CCW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, 2, SERVO_CCW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, 3, SERVO_CW, SteDeg*100, SERVO_POS);
 	}
 	osDelay(10);
 	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea

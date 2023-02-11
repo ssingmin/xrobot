@@ -144,7 +144,7 @@ void CanInit(uint32_t id, uint32_t mask)
 	#else//example idmask mode
     sFilterConfig.FilterBank = 0;
     sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
-    sFilterConfig.FilterScale = CAN_FILTERSCALE_16BIT;
+    sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
     sFilterConfig.FilterIdHigh = (id<<3)>>16;
     sFilterConfig.FilterIdLow = ((id<<3)&0xffff)|(0x1<<2);
     sFilterConfig.FilterMaskIdHigh = (mask<<3)>>16;
@@ -258,9 +258,9 @@ int PDOMapping(uint8_t Node_id, uint16_t PDO_index, MappingPar Param, uint8_t Nu
 	return 1;
 }
 
-void PDOMsg(uint8_t Node_id, uint16_t PDO_index, uint8_t *buf)
+void PDOMsg(uint8_t Node_id, uint16_t PDO_index, uint8_t *buf, uint8_t length)
 {
-	sendCan((PDO_index-0x1800)+Node_id,buf,8,0);
+	sendCan((PDO_index-0x1800)+Node_id,buf,length,0);
 }
 
 void Vel_PDOMsg(uint8_t Node_id, uint16_t PDO_index, uint16_t vel_left, uint16_t vel_right)
@@ -272,7 +272,7 @@ void Vel_PDOMsg(uint8_t Node_id, uint16_t PDO_index, uint16_t vel_left, uint16_t
 	buf[2]=(uint8_t)vel_right;
 	buf[3]=(uint8_t)(vel_right>>8);
 
-	PDOMsg(Node_id, PDO_index, buf);
+	PDOMsg(Node_id, PDO_index, buf, 4);
 }
 
 
@@ -294,7 +294,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
   /* Get RX message */
 	if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &g_tCan_Rx_Header, g_uCAN_Rx_Data) != HAL_OK){while(1){;}}
 	osDelay(10);
-	printf("HAL_CAN_RxFifo0MsgPendingCallback\n");
+//	printf("g_uCAN_Rx_Data: %x %x %x %x %x %x %x %x \n", g_uCAN_Rx_Data[0], g_uCAN_Rx_Data[1], g_uCAN_Rx_Data[2], g_uCAN_Rx_Data[3],
+//													g_uCAN_Rx_Data[4], g_uCAN_Rx_Data[5], g_uCAN_Rx_Data[6], g_uCAN_Rx_Data[7]);
 	FLAG_RxCplt++;
 }
 
