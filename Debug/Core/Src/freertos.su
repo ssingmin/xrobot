@@ -5,7 +5,7 @@
 ../Core/Src/freertos.c:275:6:StartDefaultTask	24	static
 ../Core/Src/freertos.c:300:6:StartTask02	112	static
 ../Core/Src/freertos.c:491:6:StartTask03	40	static
-../Core/Src/freertos.c:606:6:StartTask04	24	static
-../Core/Src/freertos.c:737:6:StartTask05	24	static
-../Core/Src/freertos.c:764:6:StartTask06	24	static
-../Core/Src/freertos.c:809:6:VelStopTimerCallback	16	static
+../Core/Src/freertos.c:614:6:StartTask04	24	static
+../Core/Src/freertos.c:745:6:StartTask05	24	static
+../Core/Src/freertos.c:772:6:StartTask06	24	static
+../Core/Src/freertos.c:817:6:VelStopTimerCallback	16	static

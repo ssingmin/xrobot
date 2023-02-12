@@ -379,8 +379,7 @@ void StartTask02(void *argument)
 				Tar_cmd_v_y = (int16_t)canbuf[3]<<8 | (int16_t)canbuf[2];
 				Tar_cmd_w = canbuf[5]<<8 | (int16_t)canbuf[4];
 				torqueSW = canbuf[6];
-				Stop_flag=1;
-				printf("Tar_cmd_v_x: %d\n", Tar_cmd_v_x);
+				Stop_flag++;
 				break;
 
 			case 0x181:
@@ -422,7 +421,7 @@ void StartTask02(void *argument)
 //	Tar_cmd_v_y=10;
 //	Tar_cmd_w = 0;
 ///////////
-	printf("Tar_cmd_v_x: %d\n", Tar_cmd_v_x);
+	//printf("Tar_cmd_v_x: %d\n", Tar_cmd_v_x);
 
 	osDelay(10);
 
@@ -443,7 +442,7 @@ void StartTask02(void *argument)
 
 	else{
 		Tar_cmd_FL = CONSTANT_VEL  *  (Tar_cmd_v_x*cos(ANGLE_RAD) + Tar_cmd_v_y*sin(ANGLE_RAD));
-		printf("Tar_cmd_FL: %d\n", Tar_cmd_FL);
+		//printf("Tar_cmd_FL: %d\n", Tar_cmd_FL);
 
 		if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
 		Tar_cmd_FR = -Tar_cmd_FL;
@@ -461,13 +460,14 @@ void StartTask02(void *argument)
 		osDelay(10);
 		//printf("FL FR RL RR: %d %d %d %d \n",Tar_cmd_FL, Tar_cmd_FR, Tar_cmd_RL, Tar_cmd_RR);
 		ModeABCD = 1;
-		printf("rad2deg(%d)\n", rad2deg(ANGLE_RAD));
+		//printf("rad2deg(%d)\n", rad2deg(ANGLE_RAD));
 	}
 	//printf("33Tar_cmd_v_x&Tar_cmd_v_y&Tar_cmd_w%d %d %d\n", Tar_cmd_v_x,Tar_cmd_v_y,Tar_cmd_w);
-	if((Tar_cmd_v_x==0)&&(Tar_cmd_v_y==0)&&(Tar_cmd_w==0)){
+	if((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0) || (Stop_flag==0)){
+
 		ModeABCD = 4;
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
-		osDelay(10);
+		//osDelay(10);
 		//printf("Tar_cmd_v_x&Tar_cmd_v_y&Tar_cmd_w\n");
 	}
 
@@ -560,10 +560,16 @@ void StartTask03(void *argument)
 		if(Tar_cmd_v_x==0&&Tar_cmd_v_y>0){SteDeg=90; Dir_Rot=SERVO_CCW;}
 		else if(Tar_cmd_v_x==0&&Tar_cmd_v_y<0){SteDeg=90; Dir_Rot=SERVO_CW;}
 
-		if		((Tar_cmd_v_x>0) && (Tar_cmd_v_y>0)){/*SteDeg*=1;*/		Dir_Rot=SERVO_CCW; osDelay(10); printf("the first quadrant: %d\n", SteDeg);}//the first quadrant
-		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y>0)){SteDeg=180-SteDeg;	Dir_Rot=SERVO_CW; osDelay(10); printf("the second quadrant: %d\n", SteDeg);}//the second quadrant
-		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y<0)){SteDeg=180+SteDeg;	Dir_Rot=SERVO_CCW; osDelay(10); printf("the third quadrant: %d\n", SteDeg);}//the third quadrant
-		else if	((Tar_cmd_v_x>0) && (Tar_cmd_v_y<0)){SteDeg*=-1;		Dir_Rot=SERVO_CW; osDelay(10); printf("the fourth quadrant: %d\n", SteDeg);}//the fourth quadrant
+		if		((Tar_cmd_v_x>0) && (Tar_cmd_v_y>0)){/*SteDeg*=1;*/		Dir_Rot=SERVO_CCW; }//the first quadrant
+		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y>0)){SteDeg=180-SteDeg;	Dir_Rot=SERVO_CW; }//the second quadrant
+		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y<0)){SteDeg=180+SteDeg;	Dir_Rot=SERVO_CCW; }//the third quadrant
+		else if	((Tar_cmd_v_x>0) && (Tar_cmd_v_y<0)){SteDeg*=-1;		Dir_Rot=SERVO_CW; }//the fourth quadrant
+
+//		if		((Tar_cmd_v_x>0) && (Tar_cmd_v_y>0)){/*SteDeg*=1;*/		Dir_Rot=SERVO_CCW; osDelay(10); printf("the first quadrant: %d\n", SteDeg);}//the first quadrant
+//		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y>0)){SteDeg=180-SteDeg;	Dir_Rot=SERVO_CW; osDelay(10); printf("the second quadrant: %d\n", SteDeg);}//the second quadrant
+//		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y<0)){SteDeg=180+SteDeg;	Dir_Rot=SERVO_CCW; osDelay(10); printf("the third quadrant: %d\n", SteDeg);}//the third quadrant
+//		else if	((Tar_cmd_v_x>0) && (Tar_cmd_v_y<0)){SteDeg*=-1;		Dir_Rot=SERVO_CW; osDelay(10); printf("the fourth quadrant: %d\n", SteDeg);}//the fourth quadrant
+
 
 		if((SteDeg>=0) && (SteDeg<=90)){//prevent from angle over range
 			DataSetSteering(buf, 0, Dir_Rot, SteDeg*100, SERVO_POS);
@@ -588,6 +594,8 @@ void StartTask03(void *argument)
 		DataSetSteering(buf, 1, SERVO_CCW, SteDeg*100, SERVO_POS);
 		DataSetSteering(buf, 2, SERVO_CCW, SteDeg*100, SERVO_POS);
 		DataSetSteering(buf, 3, SERVO_CW, SteDeg*100, SERVO_POS);
+		osDelay(10);
+		printf("Mode D\n");
 	}
 	osDelay(10);
 	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
@@ -623,7 +631,7 @@ void StartTask04(void *argument)
 		temp++;
 		switch (temp) {
 			case 1:
-				printf("case1\n");
+				//printf("case1\n");
 				ws2812SetColor(0,0,0,1);//index, r, g, b
 				ws2812SetColor(1,0,1,0);//index, r, g, b
 				ws2812SetColor(2,1,0,0);//index, r, g, b
@@ -634,7 +642,7 @@ void StartTask04(void *argument)
 				ws2812SetColor(7,0,1,0);//index, r, g, b
 				break;
 			case 2:
-				printf("case2\n");
+				//printf("case2\n");
 				ws2812SetColor(7,0,0,1);//index, r, g, b
 				ws2812SetColor(0,0,1,0);//index, r, g, b
 				ws2812SetColor(1,1,0,0);//index, r, g, b
@@ -645,7 +653,7 @@ void StartTask04(void *argument)
 				ws2812SetColor(6,0,1,0);//index, r, g, b
 				break;
 			case 3:
-				printf("case3\n");
+				//printf("case3\n");
 				ws2812SetColor(6,0,0,1);//index, r, g, b
 				ws2812SetColor(7,0,1,0);//index, r, g, b
 				ws2812SetColor(0,1,0,0);//index, r, g, b
@@ -656,7 +664,7 @@ void StartTask04(void *argument)
 				ws2812SetColor(5,0,1,0);//index, r, g, b
 				break;
 			case 4:
-				printf("case4\n");
+				//printf("case4\n");
 				ws2812SetColor(5,0,0,1);//index, r, g, b
 				ws2812SetColor(6,0,1,0);//index, r, g, b
 				ws2812SetColor(7,1,0,0);//index, r, g, b
@@ -667,7 +675,7 @@ void StartTask04(void *argument)
 				ws2812SetColor(4,0,1,0);//index, r, g, b
 				break;
 			case 5:
-				printf("case5\n");
+				//printf("case5\n");
 				ws2812SetColor(4,0,0,1);//index, r, g, b
 				ws2812SetColor(5,0,1,0);//index, r, g, b
 				ws2812SetColor(6,1,0,0);//index, r, g, b
@@ -681,7 +689,7 @@ void StartTask04(void *argument)
 
 				break;
 			case 6:
-				printf("case6\n");
+				//printf("case6\n");
 				ws2812SetColor(3,0,0,1);//index, r, g, b
 				ws2812SetColor(4,0,1,0);//index, r, g, b
 				ws2812SetColor(5,1,0,0);//index, r, g, b
@@ -694,7 +702,7 @@ void StartTask04(void *argument)
 				ws2812SetColor(9,1,1,0);//index, r, g, b
 				break;
 			case 7:
-				printf("case7\n");
+				//printf("case7\n");
 				ws2812SetColor(2,0,0,1);//index, r, g, b
 				ws2812SetColor(3,0,1,0);//index, r, g, b
 				ws2812SetColor(4,1,0,0);//index, r, g, b
@@ -705,7 +713,7 @@ void StartTask04(void *argument)
 				ws2812SetColor(1,0,1,0);//index, r, g, b
 				break;
 			case 8:
-				printf("case8\n");
+				//printf("case8\n");
 				ws2812SetColor(1,0,0,1);//index, r, g, b
 				ws2812SetColor(2,0,1,0);//index, r, g, b
 				ws2812SetColor(3,1,0,0);//index, r, g, b
@@ -809,6 +817,7 @@ void StartTask06(void *argument)
 void VelStopTimerCallback(void *argument)
 {
   /* USER CODE BEGIN VelStopTimerCallback */
+	printf("Stop_flag:%d \n", Stop_flag);
 	if(Stop_flag){Stop_flag = 0;}
 	else {ModeABCD = 4;}
   /* USER CODE END VelStopTimerCallback */
