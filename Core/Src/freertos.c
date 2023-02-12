@@ -75,9 +75,12 @@ MappingPar vel_TxPDO1={{0x603F,0,0,0},//index //error code
 uint8_t PS_SIGx_Pin = 0;	//0000 4321
 
 int16_t SteDeg;	//steering degree unit=0.01 degree
-uint8_t ModeABCD=0;
+uint8_t ModeABCD=4;//4 is stop mode
+uint8_t Pre_ModeABCD=0;
 uint8_t STinitdone=0;
 uint8_t Stop_flag = 0;
+uint8_t EndModeD = 0;
+uint8_t timerflag = 1;
 
 char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
@@ -101,14 +104,14 @@ osThreadId_t canTaskHandle;
 const osThreadAttr_t canTask_attributes = {
   .name = "canTask",
   .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityNormal1,
+  .priority = (osPriority_t) osPriorityNormal2,
 };
 /* Definitions for UartComm */
 osThreadId_t UartCommHandle;
 const osThreadAttr_t UartComm_attributes = {
   .name = "UartComm",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityNormal1,
 };
 /* Definitions for NP_LED */
 osThreadId_t NP_LEDHandle;
@@ -135,6 +138,11 @@ const osThreadAttr_t IRQ_PSx_attributes = {
 osTimerId_t VelStopTimerHandle;
 const osTimerAttr_t VelStopTimer_attributes = {
   .name = "VelStopTimer"
+};
+/* Definitions for EndModeDTimer */
+osTimerId_t EndModeDTimerHandle;
+const osTimerAttr_t EndModeDTimer_attributes = {
+  .name = "EndModeDTimer"
 };
 /* Definitions for PSx_SIG_BinSem */
 osSemaphoreId_t PSx_SIG_BinSemHandle;
@@ -197,6 +205,7 @@ void StartTask04(void *argument);
 void StartTask05(void *argument);
 void StartTask06(void *argument);
 void VelStopTimerCallback(void *argument);
+void EndModeDTimerCallback(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -225,6 +234,9 @@ void MX_FREERTOS_Init(void) {
   /* Create the timer(s) */
   /* creation of VelStopTimer */
   VelStopTimerHandle = osTimerNew(VelStopTimerCallback, osTimerPeriodic, NULL, &VelStopTimer_attributes);
+
+  /* creation of EndModeDTimer */
+  EndModeDTimerHandle = osTimerNew(EndModeDTimerCallback, osTimerOnce, NULL, &EndModeDTimer_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
@@ -319,7 +331,8 @@ void StartTask02(void *argument)
 	int16_t Real_cmd_w = 0;
 
 	uint8_t torqueSW = 0;
-	uint8_t EndModeD = 0;
+	uint8_t Oncetimer = 1;
+
 	//////////////////////////////
 	uint32_t lastTime;
 
@@ -341,12 +354,6 @@ void StartTask02(void *argument)
 		SDOMsg(i+1,0x200f, 0x0, 0x01, 2);//Node_id, index,  subindex,  msg,  len//1e: Synchronization control
 	}
 
-	//PDOMapping(Node_id, 0x1A01, vel_TxPDO2, 2);
-	Vel_PDOMsg(1, TxPDO0, 0x2, 0x1);
-	Vel_PDOMsg(2, TxPDO0, 0x10, 0x20);
-	//osDelay(3000);
-	Vel_PDOMsg(1, TxPDO0, 0x0, 0x0);
-	Vel_PDOMsg(2, TxPDO0, 0x0, 0x0);
   /* Infinite loop */
 
 	lastTime = osKernelGetTickCount ();
@@ -363,7 +370,7 @@ void StartTask02(void *argument)
 	{
 		for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[i];}
 		FLAG_RxCplt--;
-		if(g_tCan_Rx_Header.StdId>g_tCan_Rx_Header.ExtId){CanId = g_tCan_Rx_Header.StdId;}//꼭체크
+		if(g_tCan_Rx_Header.StdId>g_tCan_Rx_Header.ExtId){CanId = g_tCan_Rx_Header.StdId;}//�?체크
 		else {CanId = g_tCan_Rx_Header.ExtId;}
 
 		//sendCan(1, canbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext)
@@ -410,12 +417,6 @@ void StartTask02(void *argument)
 	canbuf[0] = 1;
 
 	for(int i=0;i<8;i++){canbuf[i]=0;}
-//for test
-//	Tar_cmd_v_x=-100;
-//	Tar_cmd_v_y=10;
-//	Tar_cmd_w = 0;
-///////////
-	//printf("Tar_cmd_v_x: %d\n", Tar_cmd_v_x);
 
 	if(Tar_cmd_w){
 		Tar_cmd_v_x=0;
@@ -426,12 +427,18 @@ void StartTask02(void *argument)
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
 		//osDelay(10);
 		//printf("Tar_cmd_FL: %d\n", Tar_cmd_FL);
+		printf("Tar_cmd_w EndModeD: %d\n", EndModeD);
+
 		//SteDeg=rad2deg(ANGLE_VEL);
 		ModeABCD = 2;
+		if((Pre_ModeABCD!=ModeABCD)&&(ModeABCD!=4)){
+			osTimerStart(EndModeDTimerHandle, 3000);
+			printf("Pre_ModeABCD osTimerStart\n");
+			Pre_ModeABCD=ModeABCD;
+		}
 	}
 
-
-	else{
+	else if(Tar_cmd_v_x|Tar_cmd_v_x){
 		Tar_cmd_FL = CONSTANT_VEL  *  (Tar_cmd_v_x*cos(ANGLE_RAD) + Tar_cmd_v_y*sin(ANGLE_RAD));
 		//printf("Tar_cmd_FL: %d\n", Tar_cmd_FL);
 
@@ -446,20 +453,36 @@ void StartTask02(void *argument)
 			Tar_cmd_RL*=-1;
 			Tar_cmd_RR*=-1;
 		}
+		printf("Tar_cmd_FL EndModeD: %d\n", EndModeD);
 
 		SteDeg=rad2deg(ANGLE_RAD);
 		ModeABCD = 1;
+
+		if(Pre_ModeABCD!=ModeABCD){
+			printf("111osTimerStart: %d, %d\n", ModeABCD, Pre_ModeABCD);
+			Pre_ModeABCD=ModeABCD;
+			if(timerflag){
+				printf("timerflag: %d\n", timerflag);
+				osTimerStart(EndModeDTimerHandle, 3000);
+				timerflag = 0;
+
+			}
+
+
+		}
 	}
 
 	if(((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0))  ||  (Stop_flag==0))
 	{
 		ModeABCD = 4;
+		Pre_ModeABCD = 4;
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
 //		osDelay(10);
-//		printf("ModeABCD = 4\n");
+		printf("ModeABCD = 4\n");
 	}
 
 	if(STinitdone && EndModeD){
+
 		Vel_PDOMsg(1, TxPDO0, Tar_cmd_FL, Tar_cmd_FR);
 		Vel_PDOMsg(2, TxPDO0, Tar_cmd_RL, Tar_cmd_RR);
 	}
@@ -581,6 +604,7 @@ void StartTask03(void *argument)
 		DataSetSteering(buf, 1, SERVO_CCW, SteDeg*100, SERVO_POS);
 		DataSetSteering(buf, 2, SERVO_CCW, SteDeg*100, SERVO_POS);
 		DataSetSteering(buf, 3, SERVO_CW, SteDeg*100, SERVO_POS);
+		EndModeD = 0;
 		osDelay(10);
 		printf("Mode D\n");
 	}
@@ -808,6 +832,18 @@ void VelStopTimerCallback(void *argument)
 	if(Stop_flag){Stop_flag = 0;}
 	else {ModeABCD = 4;}
   /* USER CODE END VelStopTimerCallback */
+}
+
+/* EndModeDTimerCallback function */
+void EndModeDTimerCallback(void *argument)
+{
+  /* USER CODE BEGIN EndModeDTimerCallback */
+	EndModeD = 1;
+	timerflag = 1;
+	printf("endmodetimerflag: %d\n", timerflag);
+osDelay(10);
+	printf("TimerCallback EndModeD: %d\n", EndModeD);
+  /* USER CODE END EndModeDTimerCallback */
 }
 
 /* Private application code --------------------------------------------------*/

@@ -94,6 +94,7 @@ int main(void)
 #if 0
 //  must positions Init functions such as from below
   MX_GPIO_Init();
+  GPIO_disableirq();
   MX_CAN1_Init();
 
   MX_TIM1_Init();
@@ -108,6 +109,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  GPIO_disableirq();
   MX_CAN1_Init();
 
   MX_TIM1_Init();
