@@ -51,7 +51,7 @@ MappingPar vel_TxPDO0={{0x606C,0,0,0},//index //target speed
 						0x01,//option
 						200};//option_time //inhibit time 10000, event time 1000 = 500ms
 
-MappingPar vel_TxPDO1={{0x603F,0,0,0},//index //target speed
+MappingPar vel_TxPDO1={{0x603F,0,0,0},//index //error code
 						{0x00,0,0,0},//subindex //left and rigt target speed combination
 						{0x10,0,0,0},//length //16bit
 						0x00,//option
@@ -304,9 +304,6 @@ void StartTask02(void *argument)
 	int8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
 	uint32_t CanId = 0;
 
-
-
-
 	int16_t Tar_cmd_FL = 0;//Front Left
 	int16_t Tar_cmd_FR = 0;//Front Right
 	int16_t Tar_cmd_RL= 0;//Rear Left
@@ -322,21 +319,20 @@ void StartTask02(void *argument)
 	int16_t Real_cmd_w = 0;
 
 	uint8_t torqueSW = 0;
-
+	uint8_t EndModeD = 0;
 	//////////////////////////////
 	uint32_t lastTime;
 
-	CanInit(0,0);
+	CanInit(FILTERID,MASKID,EXT);
 
 	osDelay(3000);//must delay for nmt from motor driver
 	PDOMapping(1, RxPDO0, vel_RxPDO0, 1);
 	PDOMapping(2, RxPDO0, vel_RxPDO0, 1);
 
-//	PDOMapping(1, TxPDO0, vel_TxPDO0, 1);//event time mode 100ms
-//	PDOMapping(2, TxPDO0, vel_TxPDO0, 1);//event time mode
-//	PDOMapping(1, TxPDO1, vel_TxPDO1, 1);//inhibit mode 100ms
-//	PDOMapping(2, TxPDO1, vel_TxPDO1, 1);//inhibit mode
-
+	PDOMapping(1, TxPDO0, vel_TxPDO0, 1);//event time mode 100ms
+	PDOMapping(2, TxPDO0, vel_TxPDO0, 1);//event time mode
+	PDOMapping(1, TxPDO1, vel_TxPDO1, 1);//inhibit mode 100ms
+	PDOMapping(2, TxPDO1, vel_TxPDO1, 1);//inhibit mode
 
 	for(int i=0;i<2;i++){
 		SDOMsg(i+1,0x2010, 0x0, 0x01, 1);//Node_id, index,  subindex,  msg,  len//save eeprom
@@ -353,7 +349,7 @@ void StartTask02(void *argument)
 	Vel_PDOMsg(2, TxPDO0, 0x0, 0x0);
   /* Infinite loop */
 
-	lastTime = osKernelGetTickCount();
+	lastTime = osKernelGetTickCount ();
   for(;;)
   {
 
@@ -412,9 +408,7 @@ void StartTask02(void *argument)
 	canbuf[2] = 3;
 	canbuf[1] = 2;
 	canbuf[0] = 1;
-	osDelay(10);
 
-	//sendCan(2, canbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext)
 	for(int i=0;i<8;i++){canbuf[i]=0;}
 //for test
 //	Tar_cmd_v_x=-100;
@@ -423,9 +417,6 @@ void StartTask02(void *argument)
 ///////////
 	//printf("Tar_cmd_v_x: %d\n", Tar_cmd_v_x);
 
-	osDelay(10);
-
-	//printf("11Tar_cmd_v_x&Tar_cmd_v_y&Tar_cmd_w%d %d %d\n", Tar_cmd_v_x,Tar_cmd_v_y,Tar_cmd_w);
 	if(Tar_cmd_w){
 		Tar_cmd_v_x=0;
 		Tar_cmd_v_y=0;
@@ -433,7 +424,7 @@ void StartTask02(void *argument)
 		Tar_cmd_FL = Tar_cmd_w/CONSTANT_C_AxC_V;
 		if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
-		osDelay(10);
+		//osDelay(10);
 		//printf("Tar_cmd_FL: %d\n", Tar_cmd_FL);
 		//SteDeg=rad2deg(ANGLE_VEL);
 		ModeABCD = 2;
@@ -457,22 +448,18 @@ void StartTask02(void *argument)
 		}
 
 		SteDeg=rad2deg(ANGLE_RAD);
-		osDelay(10);
-		//printf("FL FR RL RR: %d %d %d %d \n",Tar_cmd_FL, Tar_cmd_FR, Tar_cmd_RL, Tar_cmd_RR);
 		ModeABCD = 1;
-		//printf("rad2deg(%d)\n", rad2deg(ANGLE_RAD));
 	}
-	//printf("33Tar_cmd_v_x&Tar_cmd_v_y&Tar_cmd_w%d %d %d\n", Tar_cmd_v_x,Tar_cmd_v_y,Tar_cmd_w);
-	if((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0) || (Stop_flag==0)){
 
+	if(((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0))  ||  (Stop_flag==0))
+	{
 		ModeABCD = 4;
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
-		//osDelay(10);
-		//printf("Tar_cmd_v_x&Tar_cmd_v_y&Tar_cmd_w\n");
+//		osDelay(10);
+//		printf("ModeABCD = 4\n");
 	}
 
-	osDelay(20);
-	if(STinitdone){
+	if(STinitdone && EndModeD){
 		Vel_PDOMsg(1, TxPDO0, Tar_cmd_FL, Tar_cmd_FR);
 		Vel_PDOMsg(2, TxPDO0, Tar_cmd_RL, Tar_cmd_RR);
 	}

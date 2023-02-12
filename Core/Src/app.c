@@ -10,7 +10,7 @@
 
 int app(void)
 {
-	CanInit(0,0);
+	CanInit(0,0,1);
 	while(1)
 	{
 		HAL_GPIO_TogglePin(testled_GPIO_Port, testled_Pin);

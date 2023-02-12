@@ -49,6 +49,22 @@ extern CAN_HandleTypeDef hcan1;
 #define  TORQUEON 1
 #define  TORQUEOFF 0
 
+///////////////////////////////////////
+//0011 1110 1001	//0x3E9
+//0010 1000 0001	//0x281
+//0010 1000 0010	//0x282
+//0010 1000 0010	//0x282
+//
+//1110 1001 0100	maskid//111010010100//0xE94
+//0010 1000 0000	filterid//0010100000000//0x280
+//010 00110 0000	//0x460
+//111 11010 0001	//0xFA1
+
+#define FILTERID 0x280
+#define MASKID 0xE94
+#define EXT 0x1
+///////////////////////////////////////
+
 typedef struct _MappingPar {
 	uint16_t index[4];
 	uint8_t subindex[4];
@@ -63,7 +79,7 @@ typedef struct _MappingPar {
 void MX_CAN1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-void CanInit(uint32_t id, uint32_t mask);
+void CanInit(uint32_t id, uint32_t mask, uint8_t EXT_Select);
 void sendCan(uint32_t ID, uint8_t *buf, uint8_t len, uint8_t ext);
 void SDOMsg(uint8_t Node_id,uint16_t index, uint8_t subindex, uint32_t msg, uint8_t len);
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle);

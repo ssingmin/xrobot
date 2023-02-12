@@ -125,7 +125,7 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 
 /* USER CODE BEGIN 1 */
 
-void CanInit(uint32_t id, uint32_t mask)
+void CanInit(uint32_t id, uint32_t mask, uint8_t EXT_Select)
 {
 
 
@@ -136,7 +136,7 @@ void CanInit(uint32_t id, uint32_t mask)
     sFilterConfig.FilterIdHigh = 1002<<5;	//for receive id about 1002(pc)
     sFilterConfig.FilterIdLow = 0x0000;		//for receive id about 1002(pc)
     sFilterConfig.FilterMaskIdHigh = (5001<<3)>>16;		//for receive id about 5001(bottom board)
-    sFilterConfig.FilterMaskIdLow = ((5001<<3)&0xffff)|(0x1<<2);		//for receive id about 5001(bottom board)
+    sFilterConfig.FilterMaskIdLow = ((5001<<3)&0xffff)|(EXT_Select<<2);		//for receive id about 5001(bottom board)
     sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
     sFilterConfig.FilterActivation = ENABLE;
     sFilterConfig.SlaveStartFilterBank = 0;
@@ -146,9 +146,9 @@ void CanInit(uint32_t id, uint32_t mask)
     sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
     sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
     sFilterConfig.FilterIdHigh = (id<<3)>>16;
-    sFilterConfig.FilterIdLow = ((id<<3)&0xffff)|(0x1<<2);
+    sFilterConfig.FilterIdLow = ((id<<3)&0xffff)|(EXT_Select<<2);//(0x1<<2) is extended id check register
     sFilterConfig.FilterMaskIdHigh = (mask<<3)>>16;
-    sFilterConfig.FilterMaskIdLow = ((mask<<3)&0xffff)|(0x1<<2);
+    sFilterConfig.FilterMaskIdLow = ((mask<<3)&0xffff)|(EXT_Select<<2);
     sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
     sFilterConfig.FilterActivation = ENABLE;
     sFilterConfig.SlaveStartFilterBank = 0;
@@ -293,9 +293,10 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 {
   /* Get RX message */
 	if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &g_tCan_Rx_Header, g_uCAN_Rx_Data) != HAL_OK){while(1){;}}
-	osDelay(10);
+//	osDelay(10);
 //	printf("g_uCAN_Rx_Data: %x %x %x %x %x %x %x %x \n", g_uCAN_Rx_Data[0], g_uCAN_Rx_Data[1], g_uCAN_Rx_Data[2], g_uCAN_Rx_Data[3],
 //													g_uCAN_Rx_Data[4], g_uCAN_Rx_Data[5], g_uCAN_Rx_Data[6], g_uCAN_Rx_Data[7]);
+	//printf("register test\n");
 	FLAG_RxCplt++;
 }
 
