@@ -349,9 +349,10 @@ void StartTask02(void *argument)
 	osDelay(3000);//must delay for nmt from motor driver
 	while(!(STinitdone)){osDelay(100);;}
 	//CanInit(0x280,0xFFC,STDID);
-//	CanInit(FILTERID,MASKID,STDID);//must be to use it
+	CanInit(FILTERID,MASKID,STDID);//must be to use it
 //	CanInit2(0xf1a,0xFFF,EXTID);
-	CanInit(FILTERID,MASKID,EXTID);//reservation
+//	CanInit(FILTERID,MASKID,EXTID);//reservation
+	//CanInit(0,0,EXTID);
 	CAN_enableirq();
 
 
@@ -393,25 +394,25 @@ void StartTask02(void *argument)
 		switch(CanId)//parse
 		{
 			case 0x3E9:
-
-				Tar_cmd_v_x = ((((int16_t)canbuf[1])&0xff)<<8) | (int16_t)canbuf[0];
-				Tar_cmd_v_y = ((((int16_t)canbuf[3])&0xff)<<8) | (int16_t)canbuf[2];
-				Tar_cmd_w = canbuf[5]<<8 | (int16_t)canbuf[4];
+				Tar_cmd_v_x = (((int16_t)canbuf[1])<<8) | ((int16_t)canbuf[0])&0xff;
+				Tar_cmd_v_y = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
+				Tar_cmd_w = (((int16_t)canbuf[5])<<8) | ((int16_t)canbuf[4])&0xff;
 				torqueSW = canbuf[6];
 				Stop_flag++;
+				printf("Tar_cmd_w:%d \n", ((((int16_t)canbuf[5])&0xff)<<8) | (int16_t)canbuf[4]);
 				if(Stop_flag>255){Stop_flag = 1;}
 				printf("0x3E9:%d %d %d\n", Tar_cmd_v_x, Tar_cmd_v_y,Tar_cmd_w);
 				break;
 
 			case 0x181:
 				//for(int i=0;i<8;i++){canbuf2[i] = g_uCAN_Rx_Data[i];}
-				Tmp_cmd_FL = ((((int16_t)canbuf2[1])&0xff)<<8) | (int16_t)canbuf2[0];
-				Tmp_cmd_FR = ((((int16_t)canbuf2[3])&0xff)<<8) | (int16_t)canbuf2[2];
+				Tmp_cmd_FL = (((int16_t)canbuf2[1])<<8) | ((int16_t)canbuf2[0])&0xff;
+				Tmp_cmd_FR = (((int16_t)canbuf2[3])<<8) | ((int16_t)canbuf2[2])&0xff;
 
 			case 0x182:
 				//for(int i=0;i<8;i++){canbuf2[i] = g_uCAN_Rx_Data[i];}
-				Tmp_cmd_RL = ((((int16_t)canbuf2[1])&0xff)<<8) | (int16_t)canbuf2[0];
-				Tmp_cmd_RR = ((((int16_t)canbuf2[3])&0xff)<<8) | (int16_t)canbuf2[2];
+				Tmp_cmd_RL = (((int16_t)canbuf2[1])<<8) | ((int16_t)canbuf2[0])&0xff;
+				Tmp_cmd_RR = (((int16_t)canbuf2[3])<<8) | ((int16_t)canbuf2[2])&0xff;
 				break;
 
 			case 2002:
@@ -424,26 +425,22 @@ void StartTask02(void *argument)
 		CanId = 0;
 
 		for(int i=0;i<8;i++){canbuf[i]=0;}
-
 	}
-	//int16_t Real_cmd_v_x = 0;
-	//int16_t Real_cmd_v_y = 0;
-	//int16_t Real_cmd_w = 0;
-
-
 
 	if(Tar_cmd_w){
 		Tar_cmd_v_x=0;
 		Tar_cmd_v_y=0;
-
-		Tar_cmd_FL = Tar_cmd_w/CONSTANT_C_AxC_V;
-		if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
+		printf("11Tar_cmd_FL %d %d\n", Tar_cmd_FL, Tar_cmd_w);
+		Tar_cmd_FL = Tar_cmd_w*CONSTANT_C_AxC_V;
+		if(Tar_cmd_FL>100){Tar_cmd_FL=100;}
+		if(Tar_cmd_FL<-100){Tar_cmd_FL=-100;}
+		printf("12Tar_cmd_FL %d %d\n", Tar_cmd_FL, Tar_cmd_w);
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
 
-		Real_cmd_w = CONSTANT_C_AxC_V*Tar_cmd_FL;
-		Real_cmd_v_x = 0;
-		Real_cmd_v_y = 0;
-
+//		Real_cmd_w = CONSTANT_C_AxC_V*Tar_cmd_FL;
+//		Real_cmd_v_x = 0;
+//		Real_cmd_v_y = 0;
+		printf("1Tar_cmd_FL %d %d\n", Tar_cmd_FL, Tar_cmd_w);
 		ModeABCD = 2;
 		if(Pre_ModeABCD!=ModeABCD){
 			//printf("111osTimerStart: %d, %d\n", ModeABCD, Pre_ModeABCD);
@@ -460,7 +457,8 @@ void StartTask02(void *argument)
 		Tar_cmd_FL = CONSTANT_VEL  *  (Tar_cmd_v_x*cos(ANGLE_RAD) + Tar_cmd_v_y*sin(ANGLE_RAD));
 		printf("Tar_cmd_FL: %d %d\n", Tar_cmd_v_x, Tar_cmd_v_y);
 
-		if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
+		if(Tar_cmd_FL>100){Tar_cmd_FL=100;}
+		if(Tar_cmd_FL<-100){Tar_cmd_FL=-100;}
 		Tar_cmd_FR = -Tar_cmd_FL;
 		Tar_cmd_RL = Tar_cmd_FL;
 		Tar_cmd_RR = -Tar_cmd_FL;
@@ -492,7 +490,7 @@ void StartTask02(void *argument)
 			}
 		}
 	}
-
+	printf("3Tar_cmd_FL %d\n", Tar_cmd_FL);
 	if(((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0))  ||  (Stop_flag==0))
 	{
 		ModeABCD = 4;
@@ -501,7 +499,7 @@ void StartTask02(void *argument)
 		//osDelay(10);
 		//printf("ModeABCD=4 : %d %d %d %d \n",Tar_cmd_v_x,Tar_cmd_v_y,Tar_cmd_w,Stop_flag);
 	}
-
+	printf("4Tar_cmd_FL %d\n", Tar_cmd_FL);
 	if(EndModeD){
 		canbuf[7] = 8;
 		canbuf[6] = 7;
@@ -511,7 +509,7 @@ void StartTask02(void *argument)
 		canbuf[2] = (int16_t)(Real_cmd_v_y)&0xff;
 		canbuf[1] = (((int16_t)(Real_cmd_v_x)))>>8 & 0xff;
 		canbuf[0] = (int16_t)(Real_cmd_v_x)&0xff;
-
+		printf("5Tar_cmd_FL %d\n", Tar_cmd_FL);
 		Vel_PDOMsg(1, TxPDO0, Tar_cmd_FL, Tar_cmd_FR);
 		Vel_PDOMsg(2, TxPDO0, Tar_cmd_RL, Tar_cmd_RR);
 

@@ -31,7 +31,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 
 extern uint32_t FLAG_RxCplt;
-extern uint8_t g_uCAN_Rx_Data[8];
+extern int8_t g_uCAN_Rx_Data[8];
 extern CAN_RxHeaderTypeDef g_tCan_Rx_Header;
 
 /* USER CODE END Includes */

@@ -24,7 +24,7 @@
 
 uint32_t FLAG_RxCplt = 0;
 
-uint8_t					g_uCAN_Rx_Data[8] = {0,};
+int8_t					g_uCAN_Rx_Data[8] = {0,};
 uint8_t					g_uCAN_Rx_Data2[8] = {0,};
 CAN_RxHeaderTypeDef 	g_tCan_Rx_Header;
 CAN_RxHeaderTypeDef 	g_tCan_Rx_Header2;
@@ -153,14 +153,14 @@ void CanInit(uint32_t id, uint32_t mask, uint8_t EXT_Select)
     sFilterConfig.FilterBank = 0;
     sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
     sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
-    sFilterConfig.FilterIdHigh = (id<<3)>>16;
-    sFilterConfig.FilterIdLow = ((id<<3)&0xffff)|(EXT_Select<<2);//(0x1<<2) is extended id check register
-    sFilterConfig.FilterMaskIdHigh = (mask<<3)>>16;
-    sFilterConfig.FilterMaskIdLow = ((mask<<3)&0xffff)|(EXT_Select<<2);
-//    sFilterConfig.FilterIdHigh = (id<<5);
-//    sFilterConfig.FilterIdLow = 0;//(0x1<<2) is extended id check register
-//    sFilterConfig.FilterMaskIdHigh = (mask<<5);
-//    sFilterConfig.FilterMaskIdLow = 0;
+//    sFilterConfig.FilterIdHigh = (id<<3)>>16;
+//    sFilterConfig.FilterIdLow = ((id<<3)&0xffff)|(EXT_Select<<2);//(0x1<<2) is extended id check register
+//    sFilterConfig.FilterMaskIdHigh = (mask<<3)>>16;
+//    sFilterConfig.FilterMaskIdLow = ((mask<<3)&0xffff)|(EXT_Select<<2);
+    sFilterConfig.FilterIdHigh = (id<<5);
+    sFilterConfig.FilterIdLow = 0;//(0x1<<2) is extended id check register
+    sFilterConfig.FilterMaskIdHigh = (mask<<5);
+    sFilterConfig.FilterMaskIdLow = 0;
     sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
     sFilterConfig.FilterActivation = ENABLE;
     sFilterConfig.SlaveStartFilterBank = 0;
@@ -345,7 +345,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 //	osDelay(10);
 //	printf("g_uCAN_Rx_Data: %x %x %x %x %x %x %x %x \n", g_uCAN_Rx_Data[0], g_uCAN_Rx_Data[1], g_uCAN_Rx_Data[2], g_uCAN_Rx_Data[3],
 //													g_uCAN_Rx_Data[4], g_uCAN_Rx_Data[5], g_uCAN_Rx_Data[6], g_uCAN_Rx_Data[7]);
-	//printf("register test\n");
+	printf("register test\n");
 	FLAG_RxCplt=1;
 }
 
