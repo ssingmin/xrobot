@@ -25,9 +25,13 @@
 uint32_t FLAG_RxCplt = 0;
 
 uint8_t					g_uCAN_Rx_Data[8] = {0,};
+uint8_t					g_uCAN_Rx_Data2[8] = {0,};
 CAN_RxHeaderTypeDef 	g_tCan_Rx_Header;
+CAN_RxHeaderTypeDef 	g_tCan_Rx_Header2;
 
 CAN_FilterTypeDef       sFilterConfig;
+CAN_FilterTypeDef       sFilterConfig2;
+
 /* USER CODE END 0 */
 
 CAN_HandleTypeDef hcan1;
@@ -92,6 +96,8 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
     /* CAN1 interrupt Init */
     HAL_NVIC_SetPriority(CAN1_RX0_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
+    HAL_NVIC_SetPriority(CAN1_RX1_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);
   /* USER CODE BEGIN CAN1_MspInit 1 */
 
   /* USER CODE END CAN1_MspInit 1 */
@@ -117,6 +123,7 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 
     /* CAN1 interrupt Deinit */
     HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
+    HAL_NVIC_DisableIRQ(CAN1_RX1_IRQn);
   /* USER CODE BEGIN CAN1_MspDeInit 1 */
 
   /* USER CODE END CAN1_MspDeInit 1 */
@@ -125,10 +132,11 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 
 /* USER CODE BEGIN 1 */
 
+void CAN_disableirq(void){HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);HAL_NVIC_DisableIRQ(CAN1_RX1_IRQn);}
+void CAN_enableirq(void){HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);}
+
 void CanInit(uint32_t id, uint32_t mask, uint8_t EXT_Select)
 {
-
-
 	#if 0//example idlist mode
     sFilterConfig.FilterBank = 0;
     sFilterConfig.FilterMode = CAN_FILTERMODE_IDLIST;	//receive only canid of 1002, 5001
@@ -149,6 +157,10 @@ void CanInit(uint32_t id, uint32_t mask, uint8_t EXT_Select)
     sFilterConfig.FilterIdLow = ((id<<3)&0xffff)|(EXT_Select<<2);//(0x1<<2) is extended id check register
     sFilterConfig.FilterMaskIdHigh = (mask<<3)>>16;
     sFilterConfig.FilterMaskIdLow = ((mask<<3)&0xffff)|(EXT_Select<<2);
+//    sFilterConfig.FilterIdHigh = (id<<5);
+//    sFilterConfig.FilterIdLow = 0;//(0x1<<2) is extended id check register
+//    sFilterConfig.FilterMaskIdHigh = (mask<<5);
+//    sFilterConfig.FilterMaskIdLow = 0;
     sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
     sFilterConfig.FilterActivation = ENABLE;
     sFilterConfig.SlaveStartFilterBank = 0;
@@ -158,6 +170,43 @@ void CanInit(uint32_t id, uint32_t mask, uint8_t EXT_Select)
     if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK){while(1){;}}
 
     if (HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig) != HAL_OK)
+    {
+		/* Filter configuration Error */
+		Error_Handler();
+    }
+}
+
+void CanInit2(uint32_t id, uint32_t mask, uint8_t EXT_Select)
+{
+	#if 0//example idlist mode
+    sFilterConfig.FilterBank = 0;
+    sFilterConfig.FilterMode = CAN_FILTERMODE_IDLIST;	//receive only canid of 1002, 5001
+    sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
+    sFilterConfig.FilterIdHigh = 1002<<5;	//for receive id about 1002(pc)
+    sFilterConfig.FilterIdLow = 0x0000;		//for receive id about 1002(pc)
+    sFilterConfig.FilterMaskIdHigh = (5001<<3)>>16;		//for receive id about 5001(bottom board)
+    sFilterConfig.FilterMaskIdLow = ((5001<<3)&0xffff)|(EXT_Select<<2);		//for receive id about 5001(bottom board)
+    sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
+    sFilterConfig.FilterActivation = ENABLE;
+    sFilterConfig.SlaveStartFilterBank = 0;
+
+	#else//example idmask mode
+    sFilterConfig2.FilterBank = 1;
+    sFilterConfig2.FilterMode = CAN_FILTERMODE_IDMASK;
+    sFilterConfig2.FilterScale = CAN_FILTERSCALE_32BIT;
+    sFilterConfig2.FilterIdHigh = (id<<3)>>16;
+    sFilterConfig2.FilterIdLow = ((id<<3)&0xffff)|(EXT_Select<<2);//(0x1<<2) is extended id check register
+    sFilterConfig2.FilterMaskIdHigh = (mask<<3)>>16;
+    sFilterConfig2.FilterMaskIdLow = ((mask<<3)&0xffff)|(EXT_Select<<2);
+    sFilterConfig2.FilterFIFOAssignment = CAN_RX_FIFO1;
+    sFilterConfig2.FilterActivation = ENABLE;
+    sFilterConfig2.SlaveStartFilterBank = 1;
+    #endif
+
+    if (HAL_CAN_Start(&hcan1) != HAL_OK){Error_Handler();}/* Start Error */
+    if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO1_MSG_PENDING) != HAL_OK){while(1){;}}
+
+    if (HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig2) != HAL_OK)
     {
 		/* Filter configuration Error */
 		Error_Handler();
@@ -297,8 +346,19 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 //	printf("g_uCAN_Rx_Data: %x %x %x %x %x %x %x %x \n", g_uCAN_Rx_Data[0], g_uCAN_Rx_Data[1], g_uCAN_Rx_Data[2], g_uCAN_Rx_Data[3],
 //													g_uCAN_Rx_Data[4], g_uCAN_Rx_Data[5], g_uCAN_Rx_Data[6], g_uCAN_Rx_Data[7]);
 	//printf("register test\n");
-	FLAG_RxCplt++;
+	FLAG_RxCplt=1;
 }
 
+void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
+{
+  /* Get RX message */
+	if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO1, &g_tCan_Rx_Header2, g_uCAN_Rx_Data2) != HAL_OK){while(1){;}}
+//	osDelay(10);
+//	printf("g_uCAN_Rx_Data: %x %x %x %x %x %x %x %x \n", g_uCAN_Rx_Data[0], g_uCAN_Rx_Data[1], g_uCAN_Rx_Data[2], g_uCAN_Rx_Data[3],
+//													g_uCAN_Rx_Data[4], g_uCAN_Rx_Data[5], g_uCAN_Rx_Data[6], g_uCAN_Rx_Data[7]);
+	printf("register test \n");
+
+	FLAG_RxCplt=1;
+}
 
 /* USER CODE END 1 */

@@ -96,7 +96,7 @@ int main(void)
   MX_GPIO_Init();
   GPIO_disableirq();
   MX_CAN1_Init();
-
+  CAN_disableirq();
   MX_TIM1_Init();
   MX_I2C1_SMBUS_Init();
   MX_DMA_Init();
@@ -111,7 +111,7 @@ int main(void)
   MX_GPIO_Init();
   GPIO_disableirq();
   MX_CAN1_Init();
-
+  CAN_disableirq();
   MX_TIM1_Init();
   MX_I2C1_SMBUS_Init();
   MX_DMA_Init();

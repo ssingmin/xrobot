@@ -62,7 +62,8 @@ extern CAN_HandleTypeDef hcan1;
 
 #define FILTERID 0x280
 #define MASKID 0xE94
-#define EXT 0x1
+#define STDID 0x0
+#define EXTID 0x1
 ///////////////////////////////////////
 
 typedef struct _MappingPar {
@@ -80,10 +81,12 @@ void MX_CAN1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 void CanInit(uint32_t id, uint32_t mask, uint8_t EXT_Select);
+void CanInit2(uint32_t id, uint32_t mask, uint8_t EXT_Select);
 void sendCan(uint32_t ID, uint8_t *buf, uint8_t len, uint8_t ext);
 void SDOMsg(uint8_t Node_id,uint16_t index, uint8_t subindex, uint32_t msg, uint8_t len);
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle);
-
+void CAN_disableirq(void);
+void CAN_enableirq(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
