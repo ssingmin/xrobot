@@ -345,19 +345,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 //	osDelay(10);
 //	printf("g_uCAN_Rx_Data: %x %x %x %x %x %x %x %x \n", g_uCAN_Rx_Data[0], g_uCAN_Rx_Data[1], g_uCAN_Rx_Data[2], g_uCAN_Rx_Data[3],
 //													g_uCAN_Rx_Data[4], g_uCAN_Rx_Data[5], g_uCAN_Rx_Data[6], g_uCAN_Rx_Data[7]);
-	printf("register test\n");
-	FLAG_RxCplt=1;
-}
-
-void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
-{
-  /* Get RX message */
-	if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO1, &g_tCan_Rx_Header2, g_uCAN_Rx_Data2) != HAL_OK){while(1){;}}
-//	osDelay(10);
-//	printf("g_uCAN_Rx_Data: %x %x %x %x %x %x %x %x \n", g_uCAN_Rx_Data[0], g_uCAN_Rx_Data[1], g_uCAN_Rx_Data[2], g_uCAN_Rx_Data[3],
-//													g_uCAN_Rx_Data[4], g_uCAN_Rx_Data[5], g_uCAN_Rx_Data[6], g_uCAN_Rx_Data[7]);
-	printf("register test \n");
-
+	//printf("register test\n");
 	FLAG_RxCplt=1;
 }
 

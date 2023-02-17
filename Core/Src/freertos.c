@@ -385,11 +385,11 @@ void StartTask02(void *argument)
 	if(FLAG_RxCplt>0)	//real time, check stdid, extid
 	{
 		for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[i];}
-		printf("canbuf: %d %d %d %d %d %d %d %d\n", canbuf[0], canbuf[1], canbuf[2], canbuf[3], canbuf[4], canbuf[5], canbuf[6], canbuf[7]);
+	//	printf("canbuf: %d %d %d %d %d %d %d %d\n", canbuf[0], canbuf[1], canbuf[2], canbuf[3], canbuf[4], canbuf[5], canbuf[6], canbuf[7]);
 		FLAG_RxCplt=0;
 		if(g_tCan_Rx_Header.StdId>g_tCan_Rx_Header.ExtId){CanId = g_tCan_Rx_Header.StdId;}//�??????체크
 		else {CanId = g_tCan_Rx_Header.ExtId;}
-		printf("canid: %d %d %d\n", CanId, g_tCan_Rx_Header.StdId, g_tCan_Rx_Header.ExtId);
+		//printf("canid: %d %d %d\n", CanId, g_tCan_Rx_Header.StdId, g_tCan_Rx_Header.ExtId);
 		if((g_tCan_Rx_Header.StdId>0) && (g_tCan_Rx_Header.ExtId>0)){CanId = 0;}
 		switch(CanId)//parse
 		{
@@ -399,9 +399,9 @@ void StartTask02(void *argument)
 				Tar_cmd_w = (((int16_t)canbuf[5])<<8) | ((int16_t)canbuf[4])&0xff;
 				torqueSW = canbuf[6];
 				Stop_flag++;
-				printf("Tar_cmd_w:%d \n", ((((int16_t)canbuf[5])&0xff)<<8) | (int16_t)canbuf[4]);
+			//	printf("Tar_cmd_w:%d \n", ((((int16_t)canbuf[5])&0xff)<<8) | (int16_t)canbuf[4]);
 				if(Stop_flag>255){Stop_flag = 1;}
-				printf("0x3E9:%d %d %d\n", Tar_cmd_v_x, Tar_cmd_v_y,Tar_cmd_w);
+		//		printf("0x3E9:%d %d %d\n", Tar_cmd_v_x, Tar_cmd_v_y,Tar_cmd_w);
 				break;
 
 			case 0x181:
@@ -430,17 +430,17 @@ void StartTask02(void *argument)
 	if(Tar_cmd_w){
 		Tar_cmd_v_x=0;
 		Tar_cmd_v_y=0;
-		printf("11Tar_cmd_FL %d %d\n", Tar_cmd_FL, Tar_cmd_w);
-		Tar_cmd_FL = Tar_cmd_w*CONSTANT_C_AxC_V;
-		if(Tar_cmd_FL>100){Tar_cmd_FL=100;}
-		if(Tar_cmd_FL<-100){Tar_cmd_FL=-100;}
-		printf("12Tar_cmd_FL %d %d\n", Tar_cmd_FL, Tar_cmd_w);
+	//	printf("11Tar_cmd_FL %d %d\n", Tar_cmd_FL, Tar_cmd_w);
+		Tar_cmd_FL = Tar_cmd_w/CONSTANT_C_AxC_V;
+		if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
+		if(Tar_cmd_FL<-50){Tar_cmd_FL=-50;}
+	//	printf("12Tar_cmd_FL %d %d\n", Tar_cmd_FL, Tar_cmd_w);
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
 
-//		Real_cmd_w = CONSTANT_C_AxC_V*Tar_cmd_FL;
+		Real_cmd_w = CONSTANT_C_AxC_V*Tar_cmd_FL;
 //		Real_cmd_v_x = 0;
 //		Real_cmd_v_y = 0;
-		printf("1Tar_cmd_FL %d %d\n", Tar_cmd_FL, Tar_cmd_w);
+	//	printf("1Tar_cmd_FL %d %d\n", Tar_cmd_FL, Tar_cmd_w);
 		ModeABCD = 2;
 		if(Pre_ModeABCD!=ModeABCD){
 			//printf("111osTimerStart: %d, %d\n", ModeABCD, Pre_ModeABCD);
@@ -455,7 +455,7 @@ void StartTask02(void *argument)
 
 	else if(Tar_cmd_v_x|Tar_cmd_v_y){
 		Tar_cmd_FL = CONSTANT_VEL  *  (Tar_cmd_v_x*cos(ANGLE_RAD) + Tar_cmd_v_y*sin(ANGLE_RAD));
-		printf("Tar_cmd_FL: %d %d\n", Tar_cmd_v_x, Tar_cmd_v_y);
+	//	printf("Tar_cmd_FL: %d %d\n", Tar_cmd_v_x, Tar_cmd_v_y);
 
 		if(Tar_cmd_FL>100){Tar_cmd_FL=100;}
 		if(Tar_cmd_FL<-100){Tar_cmd_FL=-100;}
@@ -490,7 +490,7 @@ void StartTask02(void *argument)
 			}
 		}
 	}
-	printf("3Tar_cmd_FL %d\n", Tar_cmd_FL);
+	//printf("3Tar_cmd_FL %d\n", Tar_cmd_FL);
 	if(((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0))  ||  (Stop_flag==0))
 	{
 		ModeABCD = 4;
@@ -499,7 +499,7 @@ void StartTask02(void *argument)
 		//osDelay(10);
 		//printf("ModeABCD=4 : %d %d %d %d \n",Tar_cmd_v_x,Tar_cmd_v_y,Tar_cmd_w,Stop_flag);
 	}
-	printf("4Tar_cmd_FL %d\n", Tar_cmd_FL);
+	//printf("4Tar_cmd_FL %d\n", Tar_cmd_FL);
 	if(EndModeD){
 		canbuf[7] = 8;
 		canbuf[6] = 7;
@@ -509,12 +509,13 @@ void StartTask02(void *argument)
 		canbuf[2] = (int16_t)(Real_cmd_v_y)&0xff;
 		canbuf[1] = (((int16_t)(Real_cmd_v_x)))>>8 & 0xff;
 		canbuf[0] = (int16_t)(Real_cmd_v_x)&0xff;
-		printf("5Tar_cmd_FL %d\n", Tar_cmd_FL);
-		Vel_PDOMsg(1, TxPDO0, Tar_cmd_FL, Tar_cmd_FR);
-		Vel_PDOMsg(2, TxPDO0, Tar_cmd_RL, Tar_cmd_RR);
+		//printf("5Tar_cmd_FL %d\n", Tar_cmd_FL);
 
 		tempflag++;
 		if(tempflag>10){
+			Vel_PDOMsg(1, TxPDO0, Tar_cmd_FL, Tar_cmd_FR);
+			Vel_PDOMsg(2, TxPDO0, Tar_cmd_RL, Tar_cmd_RR);
+
 			tempflag=0;
 			sendCan(0x7D1, canbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext)
 			for(int i=0;i<8;i++){canbuf[i]=0;}
@@ -548,6 +549,9 @@ void StartTask03(void *argument)
 
 	GPIO_enableirq();
 	osDelay(100);
+
+
+
 
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin)){
 		DataSetSteering(buf, 0, SERVO_CCW, RPM_1, SERVO_INIT);
@@ -583,6 +587,7 @@ void StartTask03(void *argument)
 		printf("PS_SIG4_Pin CW init.\n");
 	}
 	osDelay(1000);
+
 
 
 	for(int i=0;i<20;i++){
@@ -623,7 +628,7 @@ void StartTask03(void *argument)
 			DataSetSteering(buf, 2, Dir_Rot, SteDeg*100, SERVO_POS);
 			DataSetSteering(buf, 3, Dir_Rot, SteDeg*100, SERVO_POS);
 		}
-		printf("Mode A\n");
+	//	printf("Mode A\n");
 	}
 
 	if(ModeABCD == 2){
@@ -632,7 +637,7 @@ void StartTask03(void *argument)
 		DataSetSteering(buf, 1, SERVO_CW, SteDeg*100, SERVO_POS);
 		DataSetSteering(buf, 2, SERVO_CW, SteDeg*100, SERVO_POS);
 		DataSetSteering(buf, 3, SERVO_CCW, SteDeg*100, SERVO_POS);
-		printf("Mode B\n");
+		//printf("Mode B\n");
 	}
 
 	if(ModeABCD == 4){
@@ -643,7 +648,7 @@ void StartTask03(void *argument)
 		DataSetSteering(buf, 3, SERVO_CW, SteDeg*100, SERVO_POS);
 		EndModeD = 0;
 		//osDelay(10);
-		printf("Mode D\n");
+	//	printf("Mode D\n");
 	}
 	//osDelay(10);
 	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
@@ -821,7 +826,7 @@ void StartTask06(void *argument)
 {
   /* USER CODE BEGIN StartTask06 */
 	//uint32_t lastTime = osKernelGetTickCount();
-	osDelay(10);//for printf();
+	//osDelay(10);//for printf();
 	printf("StartTask06 PS_SIG3_Pin.%d: \n", PS_SIGx_Pin);
   /* Infinite loop */
   for(;;)
@@ -865,11 +870,11 @@ void StartTask06(void *argument)
 void VelStopTimerCallback(void *argument)
 {
   /* USER CODE BEGIN VelStopTimerCallback */
-	printf("Stop_flag:%d \n", Stop_flag);
+	//printf("Stop_flag:%d \n", Stop_flag);
 	if(Pre_Stop_flag != Stop_flag){Pre_Stop_flag = Stop_flag;}
 	else {ModeABCD = 4;
 	Tar_cmd_v_x=Tar_cmd_v_y = 0;
-	printf("else ModeABCD = 4\n");
+	//printf("else ModeABCD = 4\n");
 	}
   /* USER CODE END VelStopTimerCallback */
 }
