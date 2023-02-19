@@ -89,9 +89,9 @@ char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 					25, 26, 27, 28, 29, 30, 31, 32,	33, 34, 35, 36,		//3 rear right
 					37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48	};	//4 rear left
 
-int16_t Tar_cmd_v_x = 0;
-int16_t Tar_cmd_v_y = 0;
-int16_t Tar_cmd_w = 0;
+//int16_t Tar_cmd_v_x = 0;
+//int16_t Tar_cmd_v_y = 0;
+//int16_t Tar_cmd_w = 0;
 
 int8_t canbuf[8]={0,};
 int8_t sendcanbuf[8]={0,};
@@ -343,23 +343,14 @@ void StartTask02(void *argument)
 {
   /* USER CODE BEGIN StartTask02 */
 	//StartTask02 is related CAN communication. //
-	//int8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
+	int16_t Tar_cmd_v_x = 0;
+	int16_t Tar_cmd_v_y = 0;
+	int16_t Tar_cmd_w = 0;
 
-//	uint32_t CanId = 0;
-//
-//	int16_t Tar_cmd_FL = 0;//Front Left
-//	int16_t Tar_cmd_FR = 0;//Front Right
-//	int16_t Tar_cmd_RL= 0;//Rear Left
-//	int16_t Tar_cmd_RR = 0;//Rear Right
-//
 	int16_t Tmp_cmd_FL = 0;
 	int16_t Tmp_cmd_FR = 0;
 	int16_t Tmp_cmd_RL= 0;
 	int16_t Tmp_cmd_RR = 0;
-//
-//	int16_t Real_cmd_v_x = 0;
-//	int16_t Real_cmd_v_y = 0;
-//	int16_t Real_cmd_w = 0;
 
 	uint8_t torqueSW = 0;
 	uint8_t Oncetimer = 1;
@@ -424,21 +415,16 @@ void StartTask02(void *argument)
 				Tar_cmd_v_y = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
 				Tar_cmd_w = (((int16_t)canbuf[5])<<8) | ((int16_t)canbuf[4])&0xff;
 				torqueSW = canbuf[6];
-				Stop_flag++;
-			//	printf("Tar_cmd_w:%d \n", ((((int16_t)canbuf[5])&0xff)<<8) | (int16_t)canbuf[4]);
-				if(Stop_flag>255){Stop_flag = 1;}
-		//		printf("0x3E9:%d %d %d\n", Tar_cmd_v_x, Tar_cmd_v_y,Tar_cmd_w);
+				if(Stop_flag++>255){Stop_flag = 1;}
 				break;
 
 			case 0x181:
-				//for(int i=0;i<8;i++){canbuf2[i] = g_uCAN_Rx_Data[i];}
 				Tmp_cmd_FL = (((int16_t)canbuf[1])<<8) | ((int16_t)canbuf[0])&0xff;
 				Tmp_cmd_FR = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
 				printf("0x181 %d\n", Tmp_cmd_FL);
 				break;
 
 			case 0x182:
-				//for(int i=0;i<8;i++){canbuf2[i] = g_uCAN_Rx_Data[i];}
 				Tmp_cmd_RL = (((int16_t)canbuf[1])<<8) | ((int16_t)canbuf[0])&0xff;
 				Tmp_cmd_RR = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
 				break;
@@ -458,18 +444,17 @@ void StartTask02(void *argument)
 	if(Tar_cmd_w){
 		Tar_cmd_v_x=0;
 		Tar_cmd_v_y=0;
-	//	printf("11Tar_cmd_FL %d %d\n", Tar_cmd_FL, Tar_cmd_w);
+
 		Tar_cmd_FL = Tar_cmd_w/CONSTANT_C_AxC_V;
+
 		if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
 		if(Tar_cmd_FL<-50){Tar_cmd_FL=-50;}
-	//	printf("12Tar_cmd_FL %d %d\n", Tar_cmd_FL, Tar_cmd_w);
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
 
 		Real_cmd_w = CONSTANT_C_AxC_V*Tar_cmd_FL;
-//		Real_cmd_v_x = 0;
-//		Real_cmd_v_y = 0;
-	//	printf("1Tar_cmd_FL %d %d\n", Tar_cmd_FL, Tar_cmd_w);
+
 		ModeABCD = 2;
+
 		if(Pre_ModeABCD!=ModeABCD){
 			//printf("111osTimerStart: %d, %d\n", ModeABCD, Pre_ModeABCD);
 			Pre_ModeABCD = ModeABCD;
@@ -497,10 +482,7 @@ void StartTask02(void *argument)
 			Tar_cmd_RL*=-1;
 			Tar_cmd_RR*=-1;
 		}
-		//printf("Tar_cmd_FL EndModeD: %d\n", EndModeD);
 
-
-		//printf("Real_cmd_v_x Real_cmd_v_yL: %d %d", Real_cmd_v_x, Real_cmd_v_y);
 		SteDeg=rad2deg(ANGLE_RAD);
 		ModeABCD = 1;
 
@@ -514,25 +496,20 @@ void StartTask02(void *argument)
 			}
 		}
 	}
-	//printf("3Tar_cmd_FL %d\n", Tar_cmd_FL);
 	if(((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0))  ||  (Stop_flag==0))
 	{
 		ModeABCD = 4;
 		Pre_ModeABCD = 4;
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
-		//osDelay(10);
-		//printf("ModeABCD=4 : %d %d %d %d \n",Tar_cmd_v_x,Tar_cmd_v_y,Tar_cmd_w,Stop_flag);
 	}
 
-			Real_cmd_v_x = CONSTANT_VEL2*Tmp_cmd_FL*cos(ANGLE_RAD)/10;
-			Real_cmd_v_y = CONSTANT_VEL2*Tmp_cmd_FL*sin(ANGLE_RAD)/10;
-			osDelay(10);
-
-			Real_cmd_w = 0;
+	Real_cmd_v_x = CONSTANT_VEL2*Tmp_cmd_FL*cos(ANGLE_RAD)/10;
+	Real_cmd_v_y = CONSTANT_VEL2*Tmp_cmd_FL*sin(ANGLE_RAD)/10;
+//	Real_cmd_w = 0;
 
 
-	sendcanbuf[7] = 8;
-	sendcanbuf[6] = 7;
+//	sendcanbuf[7] = 8;
+//	sendcanbuf[6] = 7;
 	sendcanbuf[5] = (((int16_t)(Real_cmd_w)))>>8 & 0xff;
 	sendcanbuf[4] = (int16_t)(Real_cmd_w)&0xff;
 	sendcanbuf[3] = (((int16_t)(Real_cmd_v_y)))>>8 & 0xff;
@@ -628,12 +605,6 @@ void StartTask03(void *argument)
 		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y>0)){SteDeg=180-SteDeg;	Dir_Rot=SERVO_CW; }//the second quadrant
 		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y<0)){SteDeg=180+SteDeg;	Dir_Rot=SERVO_CCW; }//the third quadrant
 		else if	((Tar_cmd_v_x>0) && (Tar_cmd_v_y<0)){SteDeg*=-1;		Dir_Rot=SERVO_CW; }//the fourth quadrant
-
-//		if		((Tar_cmd_v_x>0) && (Tar_cmd_v_y>0)){/*SteDeg*=1;*/		Dir_Rot=SERVO_CCW; osDelay(10); printf("the first quadrant: %d\n", SteDeg);}//the first quadrant
-//		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y>0)){SteDeg=180-SteDeg;	Dir_Rot=SERVO_CW; osDelay(10); printf("the second quadrant: %d\n", SteDeg);}//the second quadrant
-//		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y<0)){SteDeg=180+SteDeg;	Dir_Rot=SERVO_CCW; osDelay(10); printf("the third quadrant: %d\n", SteDeg);}//the third quadrant
-//		else if	((Tar_cmd_v_x>0) && (Tar_cmd_v_y<0)){SteDeg*=-1;		Dir_Rot=SERVO_CW; osDelay(10); printf("the fourth quadrant: %d\n", SteDeg);}//the fourth quadrant
-
 
 		if((SteDeg>=0) && (SteDeg<=90)){//prevent from angle over range
 			DataSetSteering(buf, 0, Dir_Rot, SteDeg*100, SERVO_POS);
@@ -876,9 +847,6 @@ void StartTask06(void *argument)
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 	if(EndInit == 15) {osThreadFlagsWait(1, 0, osWaitForever);}
-
-	//printf("StartTask06.\n");
-
   }
   /* USER CODE END StartTask06 */
 }
@@ -887,12 +855,8 @@ void StartTask06(void *argument)
 void VelStopTimerCallback(void *argument)
 {
   /* USER CODE BEGIN VelStopTimerCallback */
-	//printf("Stop_flag:%d \n", Stop_flag);
 	if(Pre_Stop_flag != Stop_flag){Pre_Stop_flag = Stop_flag;}
-	else {ModeABCD = 4;
-	Tar_cmd_v_x=Tar_cmd_v_y = 0;
-	//printf("else ModeABCD = 4\n");
-	}
+	else {ModeABCD = 4;	}
   /* USER CODE END VelStopTimerCallback */
 }
 
@@ -902,9 +866,6 @@ void EndModeDTimerCallback(void *argument)
   /* USER CODE BEGIN EndModeDTimerCallback */
 	EndModeD = 1;
 	timerflag = 1;
-	//printf("endmodetimerflag: %d\n", timerflag);
-//osDelay(10);
-	//printf("TimerCallback EndModeD: %d\n", EndModeD);
   /* USER CODE END EndModeDTimerCallback */
 }
 
