@@ -96,8 +96,6 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
     /* CAN1 interrupt Init */
     HAL_NVIC_SetPriority(CAN1_RX0_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
-    HAL_NVIC_SetPriority(CAN1_RX1_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);
   /* USER CODE BEGIN CAN1_MspInit 1 */
 
   /* USER CODE END CAN1_MspInit 1 */
@@ -123,7 +121,6 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 
     /* CAN1 interrupt Deinit */
     HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
-    HAL_NVIC_DisableIRQ(CAN1_RX1_IRQn);
   /* USER CODE BEGIN CAN1_MspDeInit 1 */
 
   /* USER CODE END CAN1_MspDeInit 1 */
@@ -133,7 +130,7 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 /* USER CODE BEGIN 1 */
 
 void CAN_disableirq(void){HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);HAL_NVIC_DisableIRQ(CAN1_RX1_IRQn);}
-void CAN_enableirq(void){HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);}
+void CAN_enableirq(void){HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);/*HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);*/}
 
 void CanInit(uint32_t id, uint32_t mask, uint8_t EXT_Select)
 {

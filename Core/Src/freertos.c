@@ -93,6 +93,20 @@ int16_t Tar_cmd_v_x = 0;
 int16_t Tar_cmd_v_y = 0;
 int16_t Tar_cmd_w = 0;
 
+int8_t canbuf[8]={0,};
+int8_t sendcanbuf[8]={0,};
+
+uint32_t CanId = 0;
+
+int16_t Tar_cmd_FL = 0;//Front Left
+int16_t Tar_cmd_FR = 0;//Front Right
+int16_t Tar_cmd_RL= 0;//Rear Left
+int16_t Tar_cmd_RR = 0;//Rear Right
+
+int16_t Real_cmd_v_x = 0;
+int16_t Real_cmd_v_y = 0;
+int16_t Real_cmd_w = 0;
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -105,14 +119,14 @@ const osThreadAttr_t defaultTask_attributes = {
 osThreadId_t canTaskHandle;
 const osThreadAttr_t canTask_attributes = {
   .name = "canTask",
-  .stack_size = 512 * 4,
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal2,
 };
 /* Definitions for UartComm */
 osThreadId_t UartCommHandle;
 const osThreadAttr_t UartComm_attributes = {
   .name = "UartComm",
-  .stack_size = 512 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal1,
 };
 /* Definitions for NP_LED */
@@ -145,6 +159,11 @@ const osTimerAttr_t VelStopTimer_attributes = {
 osTimerId_t EndModeDTimerHandle;
 const osTimerAttr_t EndModeDTimer_attributes = {
   .name = "EndModeDTimer"
+};
+/* Definitions for SendCanTimer */
+osTimerId_t SendCanTimerHandle;
+const osTimerAttr_t SendCanTimer_attributes = {
+  .name = "SendCanTimer"
 };
 /* Definitions for PSx_SIG_BinSem */
 osSemaphoreId_t PSx_SIG_BinSemHandle;
@@ -208,6 +227,7 @@ void StartTask05(void *argument);
 void StartTask06(void *argument);
 void VelStopTimerCallback(void *argument);
 void EndModeDTimerCallback(void *argument);
+void SendCanTimerCallback(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -240,9 +260,13 @@ void MX_FREERTOS_Init(void) {
   /* creation of EndModeDTimer */
   EndModeDTimerHandle = osTimerNew(EndModeDTimerCallback, osTimerOnce, NULL, &EndModeDTimer_attributes);
 
+  /* creation of SendCanTimer */
+  SendCanTimerHandle = osTimerNew(SendCanTimerCallback, osTimerPeriodic, NULL, &SendCanTimer_attributes);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   osTimerStart(VelStopTimerHandle, 1000);
+  osTimerStart(SendCanTimerHandle, 100);
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -319,23 +343,23 @@ void StartTask02(void *argument)
 {
   /* USER CODE BEGIN StartTask02 */
 	//StartTask02 is related CAN communication. //
-	int8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
-	int8_t canbuf2[8]={1, 2, 3, 4, 5, 6, 7, 8};
-	uint32_t CanId = 0;
+	//int8_t canbuf[8]={1, 2, 3, 4, 5, 6, 7, 8};
 
-	int16_t Tar_cmd_FL = 0;//Front Left
-	int16_t Tar_cmd_FR = 0;//Front Right
-	int16_t Tar_cmd_RL= 0;//Rear Left
-	int16_t Tar_cmd_RR = 0;//Rear Right
-
+//	uint32_t CanId = 0;
+//
+//	int16_t Tar_cmd_FL = 0;//Front Left
+//	int16_t Tar_cmd_FR = 0;//Front Right
+//	int16_t Tar_cmd_RL= 0;//Rear Left
+//	int16_t Tar_cmd_RR = 0;//Rear Right
+//
 	int16_t Tmp_cmd_FL = 0;
 	int16_t Tmp_cmd_FR = 0;
 	int16_t Tmp_cmd_RL= 0;
 	int16_t Tmp_cmd_RR = 0;
-
-	int16_t Real_cmd_v_x = 0;
-	int16_t Real_cmd_v_y = 0;
-	int16_t Real_cmd_w = 0;
+//
+//	int16_t Real_cmd_v_x = 0;
+//	int16_t Real_cmd_v_y = 0;
+//	int16_t Real_cmd_w = 0;
 
 	uint8_t torqueSW = 0;
 	uint8_t Oncetimer = 1;
@@ -349,7 +373,10 @@ void StartTask02(void *argument)
 	osDelay(3000);//must delay for nmt from motor driver
 	while(!(STinitdone)){osDelay(100);;}
 	//CanInit(0x280,0xFFC,STDID);
-	CanInit(FILTERID,MASKID,STDID);//must be to use it
+
+	//CanInit(FILTERID,MASKID,STDID);//must be to use it
+	CanInit(0,0,STDID);//must be to use it
+
 //	CanInit2(0xf1a,0xFFF,EXTID);
 //	CanInit(FILTERID,MASKID,EXTID);//reservation
 	//CanInit(0,0,EXTID);
@@ -379,15 +406,14 @@ void StartTask02(void *argument)
 
 	lastTime += PERIOD_CANCOMM;;
 	osDelayUntil(lastTime);
-
-	//SDOMsg(1,0x1011, 0x3, 0xf1, 1);
+	//osDelay(10);
 
 	if(FLAG_RxCplt>0)	//real time, check stdid, extid
 	{
 		for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[i];}
 	//	printf("canbuf: %d %d %d %d %d %d %d %d\n", canbuf[0], canbuf[1], canbuf[2], canbuf[3], canbuf[4], canbuf[5], canbuf[6], canbuf[7]);
 		FLAG_RxCplt=0;
-		if(g_tCan_Rx_Header.StdId>g_tCan_Rx_Header.ExtId){CanId = g_tCan_Rx_Header.StdId;}//�??????체크
+		if(g_tCan_Rx_Header.StdId>g_tCan_Rx_Header.ExtId){CanId = g_tCan_Rx_Header.StdId;}//�???????체크
 		else {CanId = g_tCan_Rx_Header.ExtId;}
 		//printf("canid: %d %d %d\n", CanId, g_tCan_Rx_Header.StdId, g_tCan_Rx_Header.ExtId);
 		if((g_tCan_Rx_Header.StdId>0) && (g_tCan_Rx_Header.ExtId>0)){CanId = 0;}
@@ -406,13 +432,15 @@ void StartTask02(void *argument)
 
 			case 0x181:
 				//for(int i=0;i<8;i++){canbuf2[i] = g_uCAN_Rx_Data[i];}
-				Tmp_cmd_FL = (((int16_t)canbuf2[1])<<8) | ((int16_t)canbuf2[0])&0xff;
-				Tmp_cmd_FR = (((int16_t)canbuf2[3])<<8) | ((int16_t)canbuf2[2])&0xff;
+				Tmp_cmd_FL = (((int16_t)canbuf[1])<<8) | ((int16_t)canbuf[0])&0xff;
+				Tmp_cmd_FR = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
+				printf("0x181 %d\n", Tmp_cmd_FL);
+				break;
 
 			case 0x182:
 				//for(int i=0;i<8;i++){canbuf2[i] = g_uCAN_Rx_Data[i];}
-				Tmp_cmd_RL = (((int16_t)canbuf2[1])<<8) | ((int16_t)canbuf2[0])&0xff;
-				Tmp_cmd_RR = (((int16_t)canbuf2[3])<<8) | ((int16_t)canbuf2[2])&0xff;
+				Tmp_cmd_RL = (((int16_t)canbuf[1])<<8) | ((int16_t)canbuf[0])&0xff;
+				Tmp_cmd_RR = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
 				break;
 
 			case 2002:
@@ -471,10 +499,6 @@ void StartTask02(void *argument)
 		}
 		//printf("Tar_cmd_FL EndModeD: %d\n", EndModeD);
 
-		Real_cmd_v_x = CONSTANT_VEL2*Tmp_cmd_FL*cos(ANGLE_RAD);
-		Real_cmd_v_y = CONSTANT_VEL2*Tmp_cmd_FL*sin(ANGLE_RAD);
-
-		Real_cmd_w = 0;
 
 		//printf("Real_cmd_v_x Real_cmd_v_yL: %d %d", Real_cmd_v_x, Real_cmd_v_y);
 		SteDeg=rad2deg(ANGLE_RAD);
@@ -499,30 +523,23 @@ void StartTask02(void *argument)
 		//osDelay(10);
 		//printf("ModeABCD=4 : %d %d %d %d \n",Tar_cmd_v_x,Tar_cmd_v_y,Tar_cmd_w,Stop_flag);
 	}
-	//printf("4Tar_cmd_FL %d\n", Tar_cmd_FL);
-	if(EndModeD){
-		canbuf[7] = 8;
-		canbuf[6] = 7;
-		canbuf[5] = (((int16_t)(Real_cmd_w)))>>8 & 0xff;
-		canbuf[4] = (int16_t)(Real_cmd_w)&0xff;
-		canbuf[3] = (((int16_t)(Real_cmd_v_y)))>>8 & 0xff;
-		canbuf[2] = (int16_t)(Real_cmd_v_y)&0xff;
-		canbuf[1] = (((int16_t)(Real_cmd_v_x)))>>8 & 0xff;
-		canbuf[0] = (int16_t)(Real_cmd_v_x)&0xff;
-		//printf("5Tar_cmd_FL %d\n", Tar_cmd_FL);
 
-		tempflag++;
-		if(tempflag>10){
-			Vel_PDOMsg(1, TxPDO0, Tar_cmd_FL, Tar_cmd_FR);
-			Vel_PDOMsg(2, TxPDO0, Tar_cmd_RL, Tar_cmd_RR);
+			Real_cmd_v_x = CONSTANT_VEL2*Tmp_cmd_FL*cos(ANGLE_RAD)/10;
+			Real_cmd_v_y = CONSTANT_VEL2*Tmp_cmd_FL*sin(ANGLE_RAD)/10;
+			osDelay(10);
 
-			tempflag=0;
-			sendCan(0x7D1, canbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext)
-			for(int i=0;i<8;i++){canbuf[i]=0;}
-			//printf("uxHighWaterMark: %d\n", uxTaskGetStackHighWaterMark( NULL ));//check #define INCLUDE_uxTaskGetStackHighWaterMark 1
-		}
+			Real_cmd_w = 0;
 
-	}
+
+	sendcanbuf[7] = 8;
+	sendcanbuf[6] = 7;
+	sendcanbuf[5] = (((int16_t)(Real_cmd_w)))>>8 & 0xff;
+	sendcanbuf[4] = (int16_t)(Real_cmd_w)&0xff;
+	sendcanbuf[3] = (((int16_t)(Real_cmd_v_y)))>>8 & 0xff;
+	sendcanbuf[2] = (int16_t)(Real_cmd_v_y)&0xff;
+	sendcanbuf[1] = (((int16_t)(Real_cmd_v_x)))>>8 & 0xff;
+	sendcanbuf[0] = (int16_t)(Real_cmd_v_x)&0xff;
+
   }
   /* USER CODE END StartTask02 */
 }
@@ -585,8 +602,6 @@ void StartTask03(void *argument)
 		printf("PS_SIG4_Pin CW init.\n");
 	}
 	osDelay(1000);
-
-
 
 	for(int i=0;i<20;i++){
 		osDelay(500);
@@ -891,6 +906,19 @@ void EndModeDTimerCallback(void *argument)
 //osDelay(10);
 	//printf("TimerCallback EndModeD: %d\n", EndModeD);
   /* USER CODE END EndModeDTimerCallback */
+}
+
+/* SendCanTimerCallback function */
+void SendCanTimerCallback(void *argument)
+{
+  /* USER CODE BEGIN SendCanTimerCallback */
+	//send can message by 10hz
+	Vel_PDOMsg(1, TxPDO0, Tar_cmd_FL, Tar_cmd_FR);
+	Vel_PDOMsg(2, TxPDO0, Tar_cmd_RL, Tar_cmd_RR);
+
+	sendCan(0x7D1, sendcanbuf, 8, 0);//(uint32_t ID, uint8_t data[8], uint8_t len, uint8_t ext)
+	for(int i=0;i<8;i++){canbuf[i]=0;}
+  /* USER CODE END SendCanTimerCallback */
 }
 
 /* Private application code --------------------------------------------------*/
