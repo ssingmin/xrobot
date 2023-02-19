@@ -176,7 +176,7 @@ void ModeSelect(void){
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	osThreadFlagsSet(IRQ_PSxHandle, 1);
+
 
     if(GPIO_Pin == PS_SIG1_Pin) {
     	PS_SIGx_Pin |= 0b00000001;
@@ -359,8 +359,8 @@ void StartTask02(void *argument)
 	PDOMapping(1, RxPDO0, vel_RxPDO0, 1);
 	PDOMapping(2, RxPDO0, vel_RxPDO0, 1);
 
-//	PDOMapping(1, TxPDO0, vel_TxPDO0, 1);//event time mode 100ms
-//	PDOMapping(2, TxPDO0, vel_TxPDO0, 1);//event time mode
+	PDOMapping(1, TxPDO0, vel_TxPDO0, 1);//event time mode 100ms
+	PDOMapping(2, TxPDO0, vel_TxPDO0, 1);//event time mode
 	PDOMapping(1, TxPDO1, vel_TxPDO1, 1);//inhibit mode 100ms
 	PDOMapping(2, TxPDO1, vel_TxPDO1, 1);//inhibit mode
 
@@ -549,9 +549,7 @@ void StartTask03(void *argument)
 
 	GPIO_enableirq();
 	osDelay(100);
-
-
-
+	osThreadFlagsSet(IRQ_PSxHandle, 1);
 
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin)){
 		DataSetSteering(buf, 0, SERVO_CCW, RPM_1, SERVO_INIT);
@@ -825,40 +823,44 @@ void StartTask05(void *argument)
 void StartTask06(void *argument)
 {
   /* USER CODE BEGIN StartTask06 */
+	uint8_t EndInit = 0;
 	//uint32_t lastTime = osKernelGetTickCount();
 	//osDelay(10);//for printf();
 	printf("StartTask06 PS_SIG3_Pin.%d: \n", PS_SIGx_Pin);
   /* Infinite loop */
   for(;;)
   {
-		osThreadFlagsWait(1, 0, osWaitForever);
-
+	  osDelay(10);
 	if(PS_SIGx_Pin&1){//1ch init
-		PS_SIGx_Pin=0; printf(" PS_SIG1_stop.\n");
+		PS_SIGx_Pin &= ~(1); printf(" PS_SIG1_stop.\n");
+		EndInit += 1;
 		DataSetSteering(buf, 0, SERVO_CCW, 0, 0);
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 
 	if(PS_SIGx_Pin&2){//2ch init
-		PS_SIGx_Pin=0; printf(" PS_SIG2_stop.\n");
+		PS_SIGx_Pin &= ~(2); printf(" PS_SIG2_stop.\n");
 		DataSetSteering(buf, 1, SERVO_CCW, 0, 0);
+		EndInit += 2;
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 	if(PS_SIGx_Pin&4){//3ch init
-		PS_SIGx_Pin=0; printf(" PS_SIG3_stop.\n");
+		PS_SIGx_Pin &= ~(4); printf(" PS_SIG3_stop.\n");
 		DataSetSteering(buf, 2, SERVO_CCW, 0, 0);
+		EndInit += 4;
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 	if(PS_SIGx_Pin&8){//4ch init
-		PS_SIGx_Pin=0; printf(" PS_SIG4_stop.\n");
+		PS_SIGx_Pin &= ~(8); printf(" PS_SIG4_stop.\n");
 		DataSetSteering(buf, 3, SERVO_CCW, 0, 0);
+		EndInit += 8;
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
-
+	if(EndInit == 15) {osThreadFlagsWait(1, 0, osWaitForever);}
 
 	//printf("StartTask06.\n");
 
