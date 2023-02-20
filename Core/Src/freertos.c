@@ -77,6 +77,7 @@ uint8_t PS_SIGx_Pin = 0;	//0000 4321
 
 int16_t SteDeg;	//steering degree unit=0.01 degree
 uint8_t ModeABCD = 4;//4 is stop mode
+//uint8_t ModeABCD = 1;//4 is stop mode
 uint8_t Pre_ModeABCD = 0;
 uint8_t STinitdone = 0;
 uint16_t Stop_flag = 0;
@@ -106,6 +107,8 @@ int16_t Tar_cmd_RR = 0;//Rear Right
 int16_t Real_cmd_v_x = 0;
 int16_t Real_cmd_v_y = 0;
 int16_t Real_cmd_w = 0;
+
+uint8_t EndInit = 0;
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
@@ -421,7 +424,7 @@ void StartTask02(void *argument)
 			case 0x181:
 				Tmp_cmd_FL = (((int16_t)canbuf[1])<<8) | ((int16_t)canbuf[0])&0xff;
 				Tmp_cmd_FR = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
-				printf("0x181 %d\n", Tmp_cmd_FL);
+				//printf("0x181 %d\n", Tmp_cmd_FL);
 				break;
 
 			case 0x182:
@@ -498,7 +501,7 @@ void StartTask02(void *argument)
 	}
 	if(((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0))  ||  (Stop_flag==0))
 	{
-		ModeABCD = 4;
+		ModeABCD = 2;
 		Pre_ModeABCD = 4;
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
 	}
@@ -533,58 +536,106 @@ void StartTask03(void *argument)
 {
   /* USER CODE BEGIN StartTask03 */
 	uint32_t lastTime;
-	uint8_t Dir_Rot=0; //direction of rotation
+	uint8_t Dir_Rot = 0; //direction of rotation
+	uint8_t FT_flag = 0; //FineTuning_flag
+
 //	char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 //					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
 //					25, 26, 27, 28, 29, 30, 31, 32,	33, 34, 35, 36,		//3 rear right
 //					37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48	};	//4 rear left
 
 	osDelay(1000);
-
 	GPIO_enableirq();
 	osDelay(100);
 	osThreadFlagsSet(IRQ_PSxHandle, 1);
 
+#define STMotorID1 0
+#define STMotorID2 1
+#define STMotorID3 2
+#define STMotorID4 3
+	//&= ~(2)
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin)){
-		DataSetSteering(buf, 0, SERVO_CCW, RPM_1, SERVO_INIT);
-		printf("PS_SIG1_Pin CCW init.\n");
+		DataSetSteering(buf, STMotorID1, SERVO_CCW, RPM_1, SERVO_INIT);
+		FT_flag = FT_flag|(1<<STMotorID1);
+		printf("PS_SIG1_Pin CCW init. %d\n", FT_flag);
 	}
 	else {
-		DataSetSteering(buf, 0, SERVO_CW, RPM_1, SERVO_INIT);
-		printf("PS_SIG1_Pin CW init.\n");
+		DataSetSteering(buf, STMotorID1, SERVO_CW, RPM_1, SERVO_INIT);
+		//FT_flag = FT_flag&((~0)<<STMotorID1);
+		printf("PS_SIG1_Pin CW init. %d\n", FT_flag);
 	}
 
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG2_Pin)){
-		DataSetSteering(buf, 1, SERVO_CW, RPM_1, SERVO_INIT);
+		DataSetSteering(buf, STMotorID2, SERVO_CW, RPM_1, SERVO_INIT);
+		//FT_flag = FT_flag|1<<STMotorID2
 		printf("PS_SIG2_Pin CW init.\n");
 	}
 	else {
-		DataSetSteering(buf, 1, SERVO_CCW, RPM_1, SERVO_INIT);
+		DataSetSteering(buf, STMotorID2, SERVO_CCW, RPM_1, SERVO_INIT);
+		//FT_flag = FT_flag|1<<STMotorID2
 		printf("PS_SIG2_Pin CCW init.\n");
 	}
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG3_Pin)){
-		DataSetSteering(buf, 2, SERVO_CW, RPM_1, SERVO_INIT);
+		DataSetSteering(buf, STMotorID3, SERVO_CW, RPM_1, SERVO_INIT);
+		//FT_flag = FT_flag|1<<STMotorID3
 		printf("PS_SIG3_Pin CW init.\n");
 	}
 	else {
-		DataSetSteering(buf, 2, SERVO_CCW, RPM_1, SERVO_INIT);
+		DataSetSteering(buf, STMotorID3, SERVO_CCW, RPM_1, SERVO_INIT);
+		//FT_flag = FT_flag|1<<STMotorID3
 		printf("PS_SIG3_Pin CCW init.\n");
 	}
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG4_Pin)){
-		DataSetSteering(buf, 3, SERVO_CCW, RPM_1, SERVO_INIT);
+		DataSetSteering(buf, STMotorID4, SERVO_CCW, RPM_1, SERVO_INIT);
+		//FT_flag = FT_flag|1<<STMotorID4
 		printf("PS_SIG4_Pin CCW init.\n");
 	}
 	else {
-		DataSetSteering(buf, 3, SERVO_CW, RPM_1, SERVO_INIT);
+		DataSetSteering(buf, STMotorID4, SERVO_CW, RPM_1, SERVO_INIT);
+		//FT_flag = FT_flag|1<<STMotorID4
 		printf("PS_SIG4_Pin CW init.\n");
 	}
 	osDelay(1000);
 
-	for(int i=0;i<20;i++){
-		osDelay(500);
+	for(int i=0;i<40;i++){
+		osDelay(200);
 		ServoMotor_writeDMA(buf);//servo init. must done init within 500*20ms
+		if(STinitdone){printf("steering origin init done!!!.\n"); break;}
+		printf("%d ", i);
+		if(i==39){
+			HAL_Delay(100);
+			printf("steering origin init failed reset!!!!.\n");
+			HAL_Delay(100);
+			NVIC_SystemReset();
+		}
 	}
-	osDelay(500);
+	osDelay(2000);
+	STinitdone = 0;
+	EndInit = 14;//for test
+	GPIO_enableirq();
+	osThreadFlagsSet(IRQ_PSxHandle, 1);
+#define STM_FT_ID1CW	312// 3.12 degree tuning
+#define STM_FT_ID1CCW	135// 3 degree tuning
+//#define STM_FT_ID2CW
+//#define STM_FT_ID2CCW
+//#define STM_FT_ID3CW
+//#define STM_FT_ID3CCW
+//#define STM_FT_ID4CW
+//#define STM_FT_ID4CCW
+//printf("FT_flag %d\n", FT_flag);
+	if(FT_flag&(1<<STMotorID1)){
+		DataSetSteering(buf, STMotorID1, SERVO_CW, STM_FT_ID1CW, SERVO_POS);
+		printf("SERVO_CW\n");
+	}
+	else {DataSetSteering(buf, STMotorID1, SERVO_CCW, STM_FT_ID1CCW, SERVO_POS);
+	printf("SERVO_CcW\n");}
+
+	for(int i=0;i<10;i++){
+		ServoMotor_writeDMA(buf);//servo init. must done init within 500*20ms
+		osDelay(500);
+		}
+	PS_SIGx_Pin |= 0b00000001;
+
 
 	lastTime = osKernelGetTickCount();
   /* Infinite loop */
@@ -605,29 +656,29 @@ void StartTask03(void *argument)
 		else if	((Tar_cmd_v_x>0) && (Tar_cmd_v_y<0)){SteDeg*=-1;		Dir_Rot=SERVO_CW; }//the fourth quadrant
 
 		if((SteDeg>=0) && (SteDeg<=90)){//prevent from angle over range
-			DataSetSteering(buf, 0, Dir_Rot, SteDeg*100, SERVO_POS);
-			DataSetSteering(buf, 1, Dir_Rot, SteDeg*100, SERVO_POS);
-			DataSetSteering(buf, 2, Dir_Rot, SteDeg*100, SERVO_POS);
-			DataSetSteering(buf, 3, Dir_Rot, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, STMotorID3, Dir_Rot, SteDeg*100, SERVO_POS);
+			DataSetSteering(buf, STMotorID4, Dir_Rot, SteDeg*100, SERVO_POS);
 		}
 	//	printf("Mode A\n");
 	}
 
 	if(ModeABCD == 2){
 		SteDeg=rad2deg(ANGLE_VEL);
-		DataSetSteering(buf, 0, SERVO_CCW, SteDeg*100, SERVO_POS);
-		DataSetSteering(buf, 1, SERVO_CW, SteDeg*100, SERVO_POS);
-		DataSetSteering(buf, 2, SERVO_CW, SteDeg*100, SERVO_POS);
-		DataSetSteering(buf, 3, SERVO_CCW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, STMotorID1, SERVO_CCW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, STMotorID2, SERVO_CW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, STMotorID3, SERVO_CW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, STMotorID4, SERVO_CCW, SteDeg*100, SERVO_POS);
 		//printf("Mode B\n");
 	}
 
 	if(ModeABCD == 4){
 		SteDeg=rad2deg(ANGLE_VEL);
-		DataSetSteering(buf, 0, SERVO_CW, SteDeg*100, SERVO_POS);
-		DataSetSteering(buf, 1, SERVO_CCW, SteDeg*100, SERVO_POS);
-		DataSetSteering(buf, 2, SERVO_CCW, SteDeg*100, SERVO_POS);
-		DataSetSteering(buf, 3, SERVO_CW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, STMotorID1, SERVO_CW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, STMotorID2, SERVO_CCW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, STMotorID3, SERVO_CCW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, STMotorID4, SERVO_CW, SteDeg*100, SERVO_POS);
 		EndModeD = 0;
 		//osDelay(10);
 	//	printf("Mode D\n");
@@ -807,7 +858,7 @@ void StartTask05(void *argument)
 void StartTask06(void *argument)
 {
   /* USER CODE BEGIN StartTask06 */
-	uint8_t EndInit = 0;
+//	uint8_t EndInit = 0;
 	//uint32_t lastTime = osKernelGetTickCount();
 	//osDelay(10);//for printf();
 	printf("StartTask06 PS_SIG3_Pin.%d: \n", PS_SIGx_Pin);
@@ -817,7 +868,7 @@ void StartTask06(void *argument)
 	  osDelay(10);
 	if(PS_SIGx_Pin&1){//1ch init
 		PS_SIGx_Pin &= ~(1); printf(" PS_SIG1_stop.\n");
-		EndInit += 1;
+		EndInit |= 1;
 		DataSetSteering(buf, 0, SERVO_CCW, 0, 0);
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
@@ -826,28 +877,29 @@ void StartTask06(void *argument)
 	if(PS_SIGx_Pin&2){//2ch init
 		PS_SIGx_Pin &= ~(2); printf(" PS_SIG2_stop.\n");
 		DataSetSteering(buf, 1, SERVO_CCW, 0, 0);
-		EndInit += 2;
+		EndInit |= 2;
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 	if(PS_SIGx_Pin&4){//3ch init
 		PS_SIGx_Pin &= ~(4); printf(" PS_SIG3_stop.\n");
 		DataSetSteering(buf, 2, SERVO_CCW, 0, 0);
-		EndInit += 4;
+		EndInit |= 4;
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
-	}
-	if(PS_SIGx_Pin&8){//4ch init
+	}	if(PS_SIGx_Pin&8){//4ch init
 		PS_SIGx_Pin &= ~(8); printf(" PS_SIG4_stop.\n");
 		DataSetSteering(buf, 3, SERVO_CCW, 0, 0);
-		EndInit += 8;
+		EndInit |= 8;
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
+		printf("EndInit %d\n", EndInit);
 	}
 	if(EndInit == 15) {
 		osThreadFlagsWait(1, 0, osWaitForever);
 		GPIO_disableirq();
 		STinitdone = 1;
+		printf(" EndInit == 15.\n");
 	}
   }
   /* USER CODE END StartTask06 */
@@ -857,8 +909,8 @@ void StartTask06(void *argument)
 void VelStopTimerCallback(void *argument)
 {
   /* USER CODE BEGIN VelStopTimerCallback */
-	if(Pre_Stop_flag != Stop_flag){Pre_Stop_flag = Stop_flag;}
-	else {ModeABCD = 4;	}
+//	if(Pre_Stop_flag != Stop_flag){Pre_Stop_flag = Stop_flag;}
+//	else {Stop_flag = 0;	}
   /* USER CODE END VelStopTimerCallback */
 }
 
