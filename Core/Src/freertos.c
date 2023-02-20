@@ -89,9 +89,9 @@ char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 					25, 26, 27, 28, 29, 30, 31, 32,	33, 34, 35, 36,		//3 rear right
 					37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48	};	//4 rear left
 
-//int16_t Tar_cmd_v_x = 0;
-//int16_t Tar_cmd_v_y = 0;
-//int16_t Tar_cmd_w = 0;
+int16_t Tar_cmd_v_x = 0;
+int16_t Tar_cmd_v_y = 0;
+int16_t Tar_cmd_w = 0;
 
 int8_t canbuf[8]={0,};
 int8_t sendcanbuf[8]={0,};
@@ -343,9 +343,9 @@ void StartTask02(void *argument)
 {
   /* USER CODE BEGIN StartTask02 */
 	//StartTask02 is related CAN communication. //
-	int16_t Tar_cmd_v_x = 0;
-	int16_t Tar_cmd_v_y = 0;
-	int16_t Tar_cmd_w = 0;
+//	int16_t Tar_cmd_v_x = 0;
+//	int16_t Tar_cmd_v_y = 0;
+//	int16_t Tar_cmd_w = 0;
 
 	int16_t Tmp_cmd_FL = 0;
 	int16_t Tmp_cmd_FR = 0;
@@ -585,9 +585,7 @@ void StartTask03(void *argument)
 		ServoMotor_writeDMA(buf);//servo init. must done init within 500*20ms
 	}
 	osDelay(500);
-	GPIO_disableirq();
 
-	STinitdone = 1;
 	lastTime = osKernelGetTickCount();
   /* Infinite loop */
   for(;;)
@@ -846,7 +844,11 @@ void StartTask06(void *argument)
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
-	if(EndInit == 15) {osThreadFlagsWait(1, 0, osWaitForever);}
+	if(EndInit == 15) {
+		osThreadFlagsWait(1, 0, osWaitForever);
+		GPIO_disableirq();
+		STinitdone = 1;
+	}
   }
   /* USER CODE END StartTask06 */
 }
