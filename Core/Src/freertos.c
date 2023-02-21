@@ -58,6 +58,10 @@ MappingPar vel_TxPDO1={{0x603F,0,0,0},//index //error code
 						0x00,//option
 						2000};//option_time //inhibit time 10000, event time 1000 = 500ms
 
+uint8_t STM_FT_ID[4][2] = {	{312,135},	//id1 cw = 3.12, ccw = 1.35 degree
+							{0,400},	//id2 cw = 0.0, ccw = 4.0 degree
+							{0,500},	//id3 cw = 0.0, ccw = 5.0 degree
+							{400,100}};	//id4 cw = 4.0, ccw = 1.0 degree
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -501,7 +505,7 @@ void StartTask02(void *argument)
 	}
 	if(((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0))  ||  (Stop_flag==0))
 	{
-		ModeABCD = 2;
+		ModeABCD = 4;
 		Pre_ModeABCD = 4;
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
 	}
@@ -549,25 +553,33 @@ void StartTask03(void *argument)
 	osDelay(100);
 	osThreadFlagsSet(IRQ_PSxHandle, 1);
 
-#define STMotorID1 0
-#define STMotorID2 1
-#define STMotorID3 2
-#define STMotorID4 3
-
+#if 1
+	for(int i=0;i<4;i++){
+		if(HAL_GPIO_ReadPin(GPIOA, ((1<<i)<<4))){//GPIO_PIN_4                 ((uint16_t)0x0010)  /* Pin 4 selected    */
+			if((i==STMotorID2) || (i==STMotorID3)) 	{Dir_Rot = SERVO_CW;}
+			else					{Dir_Rot = SERVO_CCW;FT_flag |= (1<<i);}
+		}
+		else {
+			if((i==STMotorID2) || (i==STMotorID3))	{Dir_Rot = SERVO_CCW;FT_flag |= (1<<i);}
+			else					{Dir_Rot = SERVO_CW;}
+		}
+		DataSetSteering(buf, i, Dir_Rot, RPM_1, SERVO_INIT);// i= STMotorIDx, x=1~4
+		printf("PS_SIG1_Pin ccw init. %d %x\n", FT_flag, ((1<<i)<<4));
+	}
+#else
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin)){
 		DataSetSteering(buf, STMotorID1, SERVO_CCW, RPM_1, SERVO_INIT);
-		FT_flag = FT_flag|(1<<STMotorID1);
-		printf("PS_SIG1_Pin CCW init. %d\n", FT_flag);
+		FT_flag = FT_flag|(1<<STMotorID1);		printf("PS_SIG1_Pin CCW init. %d\n", FT_flag);
 	}
 	else {
 		DataSetSteering(buf, STMotorID1, SERVO_CW, RPM_1, SERVO_INIT);
-		//FT_flag = FT_flag&((~0)<<STMotorID1);
+
 		printf("PS_SIG1_Pin CW init. %d\n", FT_flag);
 	}
 
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG2_Pin)){
 		DataSetSteering(buf, STMotorID2, SERVO_CW, RPM_1, SERVO_INIT);
-//		FT_flag = FT_flag|(1<<STMotorID2);
+
 		printf("PS_SIG2_Pin CW init.\n");
 	}
 	else {
@@ -577,7 +589,7 @@ void StartTask03(void *argument)
 	}
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG3_Pin)){
 		DataSetSteering(buf, STMotorID3, SERVO_CW, RPM_1, SERVO_INIT);
-		//FT_flag = FT_flag|1<<STMotorID3
+
 		printf("PS_SIG3_Pin CW init.\n");
 	}
 	else {
@@ -592,16 +604,18 @@ void StartTask03(void *argument)
 	}
 	else {
 		DataSetSteering(buf, STMotorID4, SERVO_CW, RPM_1, SERVO_INIT);
-		//FT_flag = FT_flag|1<<STMotorID4
 		printf("PS_SIG4_Pin CW init.\n");
 	}
+#endif
 	osDelay(1000);
+
+
 
 	for(int i=0;i<40;i++){
 		osDelay(200);
 		ServoMotor_writeDMA(buf);//servo init. must done init within 500*20ms
-		if(STinitdone){printf("steering origin init done!!!.\n"); break;}
 		printf("%d ", i);
+		if(STinitdone){printf("steering origin init done!!!.\n"); break;}
 		if(i==39){
 			HAL_Delay(100);
 			printf("steering origin init failed reset!!!!.\n");
@@ -609,66 +623,32 @@ void StartTask03(void *argument)
 			NVIC_SystemReset();
 		}
 	}
-	osDelay(2000);
+	osDelay(500);
 	STinitdone = 0;
-	EndInit = 14;//for test
+	EndInit = 0;
 	GPIO_enableirq();
 	osThreadFlagsSet(IRQ_PSxHandle, 1);
 
-#define STM_FT_ID1CW	312	// 3.12 degree tuning
-#define STM_FT_ID1CCW	135	// 1.35 degree tuning
-#define STM_FT_ID2CW	0	// 0 degree tuning
-#define STM_FT_ID2CCW	400	// 4.00 degree tuning
 
-#define STM_FT_ID3CW	0	// 1.35 degree tuning
-#define STM_FT_ID3CCW	500	// 1.35 degree tuning
-#define STM_FT_ID4CW	400	// 1.35 degree tuning
-#define STM_FT_ID4CCW	100	// 1.35 degree tuning
-
-printf("FT_flag %d\n", FT_flag);
-
-	if(FT_flag&(1<<STMotorID1)){
-		DataSetSteering(buf, STMotorID1, SERVO_CW, STM_FT_ID1CW, SERVO_POS);
-		printf("SERVO_CW\n");
+	for(int i=0;i<4;i++){
+		if(FT_flag&(1<<i)){
+			DataSetSteering(buf, i, SERVO_CW, STM_FT_ID[i][SERVO_CW], SERVO_POS);
+			printf("SERVO_cW\n");
+		}
+		else {
+			DataSetSteering(buf, i, SERVO_CCW, STM_FT_ID[i][SERVO_CCW], SERVO_POS);
+			printf("SERVO_ccW\n");
+		}
+		PS_SIGx_Pin |= (1<<i);
 	}
-	else {
-		DataSetSteering(buf, STMotorID1, SERVO_CCW, STM_FT_ID1CCW, SERVO_POS);
-		printf("SERVO_CcW\n");
-	}
-
-	if(FT_flag&(1<<STMotorID2)){
-		DataSetSteering(buf, STMotorID2, SERVO_CW, STM_FT_ID2CW, SERVO_POS);
-		printf("SERVO_CW\n");
-	}
-	else {
-		DataSetSteering(buf, STMotorID2, SERVO_CCW, STM_FT_ID2CCW, SERVO_POS);
-		printf("SERVO_CcW\n");
-	}
-	if(FT_flag&(1<<STMotorID3)){
-		DataSetSteering(buf, STMotorID3, SERVO_CW, STM_FT_ID3CW, SERVO_POS);
-		printf("SERVO_CW\n");
-	}
-	else {
-		DataSetSteering(buf, STMotorID3, SERVO_CCW, STM_FT_ID3CCW, SERVO_POS);
-		printf("SERVO_CcW\n");
-	}
-	if(FT_flag&(1<<STMotorID4)){
-		DataSetSteering(buf, STMotorID4, SERVO_CW, STM_FT_ID4CW, SERVO_POS);
-		printf("SERVO_CW\n");
-	}
-	else {
-		DataSetSteering(buf, STMotorID4, SERVO_CCW, STM_FT_ID4CCW, SERVO_POS);
-		printf("SERVO_CcW\n");
-	}
-
 
 	for(int i=0;i<10;i++){
 		ServoMotor_writeDMA(buf);//servo init. must done init within 500*20ms
 		osDelay(500);
 		}
-	PS_SIGx_Pin |= 0b00000001;
 
 
+	Dir_Rot = 0;//init
 	lastTime = osKernelGetTickCount();
   /* Infinite loop */
   for(;;)

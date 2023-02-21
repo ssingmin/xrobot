@@ -10,6 +10,11 @@
 
 #include "can.h"
 
+#define STMotorID1 0
+#define STMotorID2 1
+#define STMotorID3 2
+#define STMotorID4 3
+
 #define RPM_1 20
 #define RPM_2 20
 
