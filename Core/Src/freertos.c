@@ -553,7 +553,7 @@ void StartTask03(void *argument)
 #define STMotorID2 1
 #define STMotorID3 2
 #define STMotorID4 3
-	//&= ~(2)
+
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG1_Pin)){
 		DataSetSteering(buf, STMotorID1, SERVO_CCW, RPM_1, SERVO_INIT);
 		FT_flag = FT_flag|(1<<STMotorID1);
@@ -567,12 +567,12 @@ void StartTask03(void *argument)
 
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG2_Pin)){
 		DataSetSteering(buf, STMotorID2, SERVO_CW, RPM_1, SERVO_INIT);
-		//FT_flag = FT_flag|1<<STMotorID2
+//		FT_flag = FT_flag|(1<<STMotorID2);
 		printf("PS_SIG2_Pin CW init.\n");
 	}
 	else {
 		DataSetSteering(buf, STMotorID2, SERVO_CCW, RPM_1, SERVO_INIT);
-		//FT_flag = FT_flag|1<<STMotorID2
+		FT_flag = FT_flag|(1<<STMotorID2);
 		printf("PS_SIG2_Pin CCW init.\n");
 	}
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG3_Pin)){
@@ -582,12 +582,12 @@ void StartTask03(void *argument)
 	}
 	else {
 		DataSetSteering(buf, STMotorID3, SERVO_CCW, RPM_1, SERVO_INIT);
-		//FT_flag = FT_flag|1<<STMotorID3
+		FT_flag = FT_flag|(1<<STMotorID3);
 		printf("PS_SIG3_Pin CCW init.\n");
 	}
 	if(HAL_GPIO_ReadPin(GPIOA, PS_SIG4_Pin)){
 		DataSetSteering(buf, STMotorID4, SERVO_CCW, RPM_1, SERVO_INIT);
-		//FT_flag = FT_flag|1<<STMotorID4
+		FT_flag = FT_flag|(1<<STMotorID4);
 		printf("PS_SIG4_Pin CCW init.\n");
 	}
 	else {
@@ -614,21 +614,53 @@ void StartTask03(void *argument)
 	EndInit = 14;//for test
 	GPIO_enableirq();
 	osThreadFlagsSet(IRQ_PSxHandle, 1);
-#define STM_FT_ID1CW	312// 3.12 degree tuning
-#define STM_FT_ID1CCW	135// 3 degree tuning
-//#define STM_FT_ID2CW
-//#define STM_FT_ID2CCW
-//#define STM_FT_ID3CW
-//#define STM_FT_ID3CCW
-//#define STM_FT_ID4CW
-//#define STM_FT_ID4CCW
-//printf("FT_flag %d\n", FT_flag);
+
+#define STM_FT_ID1CW	312	// 3.12 degree tuning
+#define STM_FT_ID1CCW	135	// 1.35 degree tuning
+#define STM_FT_ID2CW	0	// 0 degree tuning
+#define STM_FT_ID2CCW	400	// 4.00 degree tuning
+
+#define STM_FT_ID3CW	0	// 1.35 degree tuning
+#define STM_FT_ID3CCW	500	// 1.35 degree tuning
+#define STM_FT_ID4CW	400	// 1.35 degree tuning
+#define STM_FT_ID4CCW	100	// 1.35 degree tuning
+
+printf("FT_flag %d\n", FT_flag);
+
 	if(FT_flag&(1<<STMotorID1)){
 		DataSetSteering(buf, STMotorID1, SERVO_CW, STM_FT_ID1CW, SERVO_POS);
 		printf("SERVO_CW\n");
 	}
-	else {DataSetSteering(buf, STMotorID1, SERVO_CCW, STM_FT_ID1CCW, SERVO_POS);
-	printf("SERVO_CcW\n");}
+	else {
+		DataSetSteering(buf, STMotorID1, SERVO_CCW, STM_FT_ID1CCW, SERVO_POS);
+		printf("SERVO_CcW\n");
+	}
+
+	if(FT_flag&(1<<STMotorID2)){
+		DataSetSteering(buf, STMotorID2, SERVO_CW, STM_FT_ID2CW, SERVO_POS);
+		printf("SERVO_CW\n");
+	}
+	else {
+		DataSetSteering(buf, STMotorID2, SERVO_CCW, STM_FT_ID2CCW, SERVO_POS);
+		printf("SERVO_CcW\n");
+	}
+	if(FT_flag&(1<<STMotorID3)){
+		DataSetSteering(buf, STMotorID3, SERVO_CW, STM_FT_ID3CW, SERVO_POS);
+		printf("SERVO_CW\n");
+	}
+	else {
+		DataSetSteering(buf, STMotorID3, SERVO_CCW, STM_FT_ID3CCW, SERVO_POS);
+		printf("SERVO_CcW\n");
+	}
+	if(FT_flag&(1<<STMotorID4)){
+		DataSetSteering(buf, STMotorID4, SERVO_CW, STM_FT_ID4CW, SERVO_POS);
+		printf("SERVO_CW\n");
+	}
+	else {
+		DataSetSteering(buf, STMotorID4, SERVO_CCW, STM_FT_ID4CCW, SERVO_POS);
+		printf("SERVO_CcW\n");
+	}
+
 
 	for(int i=0;i<10;i++){
 		ServoMotor_writeDMA(buf);//servo init. must done init within 500*20ms
