@@ -63,7 +63,7 @@ void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN 0 */
 int _write(int file, char *ptr, int len)//485 task for nuri motor must change uart port
 {
-	HAL_UART_Transmit(&huart2, (uint8_t *)ptr, (uint16_t)len, 100);
+	HAL_UART_Transmit_DMA(&huart2, (uint8_t *)ptr, (uint16_t)len);
 	return (len);
 }
 /* USER CODE END 0 */
