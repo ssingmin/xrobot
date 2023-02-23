@@ -407,6 +407,7 @@ void StartTask02(void *argument)
 	lastTime += PERIOD_CANCOMM;;
 	osDelayUntil(lastTime);
 	//osDelay(10);
+	printf("%d: t02\n", osKernelGetTickCount());
 
 	if(FLAG_RxCplt>0)	//real time, check stdid, extid
 	{
@@ -604,10 +605,7 @@ void StartTask03(void *argument)
 	for(int i=0;i<10;i++){
 		ServoMotor_writeDMA(buf);//servo init. must done init within 500*20ms
 		osDelay(500);
-		printf("%d:STM: %d %d %d %d %d %d %d %d\n", osKernelGetTickCount(), STM_FT_ID[0][0],STM_FT_ID[0][1],STM_FT_ID[1][0],STM_FT_ID[1][1],STM_FT_ID[2][0],STM_FT_ID[2][1],STM_FT_ID[3][0],STM_FT_ID[3][1]);
-		printf("%d: test\n", osKernelGetTickCount());
 		}
-	//osThreadFlagsSet(IRQ_PSxHandle, 1);
 
 	Dir_Rot = 0;//init
 	lastTime = osKernelGetTickCount();

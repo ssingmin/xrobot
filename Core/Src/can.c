@@ -342,7 +342,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 //	osDelay(10);
 //	printf("g_uCAN_Rx_Data: %x %x %x %x %x %x %x %x \n", g_uCAN_Rx_Data[0], g_uCAN_Rx_Data[1], g_uCAN_Rx_Data[2], g_uCAN_Rx_Data[3],
 //													g_uCAN_Rx_Data[4], g_uCAN_Rx_Data[5], g_uCAN_Rx_Data[6], g_uCAN_Rx_Data[7]);
-	printf("RF %d\n", osKernelGetTickCount());
+	printf("%d: RF\n", osKernelGetTickCount());
 	FLAG_RxCplt=1;
 }
 
