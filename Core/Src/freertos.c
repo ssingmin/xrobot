@@ -39,7 +39,7 @@
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim8;
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 1
+#define VERSION_MINOR 2
 
 MappingPar vel_RxPDO0={{0x60ff,0,0,0},//index //target speed
 						{0x03,0,0,0},//subindex //left and rigt target speed combination
@@ -533,7 +533,7 @@ void StartTask02(void *argument)
 			Tar_cmd_v_x=0;
 			Tar_cmd_v_y=0;
 
-			Tar_cmd_FL = Tar_cmd_w/CONSTANT_C_AxC_V;
+			Tar_cmd_FL = -1*(Tar_cmd_w/CONSTANT_C_AxC_V);
 
 			if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
 			if(Tar_cmd_FL<-50){Tar_cmd_FL=-50;}
@@ -617,7 +617,10 @@ void StartTask03(void *argument)
 	uint32_t lastTime;
 	uint8_t Dir_Rot = 0; //direction of rotation
 	uint8_t FT_flag = 0; //FineTuning_flag
-	uint32_t test = 0;
+
+	int32_t angle = 0;
+	int32_t pre_angle = 0;
+	int32_t speed_angle = 0;
 //	char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 //					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
 //					25, 26, 27, 28, 29, 30, 31, 32,	33, 34, 35, 36,		//3 rear right
@@ -637,7 +640,7 @@ void StartTask03(void *argument)
 			if((i==STMotorID2) || (i==STMotorID3))	{Dir_Rot = SERVO_CCW;FT_flag |= (1<<i);}
 			else					{Dir_Rot = SERVO_CW;}
 		}
-		DataSetSteering(buf, i, Dir_Rot, RPM_1, SERVO_INIT);// i= STMotorIDx, x=1~4
+		DataSetSteering(buf, i, Dir_Rot, RPM_1, SERVO_INIT, INIT_SPEED);// i= STMotorIDx, x=1~4
 		printf("PS_SIG1_Pin ccw init. %d %x\n", FT_flag, ((1<<i)<<4));
 	}
 
@@ -664,11 +667,28 @@ void StartTask03(void *argument)
 
 	for(int i=0;i<4;i++){
 		if(FT_flag&(1<<i)){
-			DataSetSteering(buf, i, SERVO_CW, STM_FT_ID[i][SERVO_CW], SERVO_POS);
+			DataSetSteering(buf, i, SERVO_CW, STM_FT_ID[i][SERVO_CW], SERVO_POS, INIT_SPEED);
 			printf("SERVO_cW\n");
 		}
 		else {
-			DataSetSteering(buf, i, SERVO_CCW, STM_FT_ID[i][SERVO_CCW], SERVO_POS);
+			DataSetSteering(buf, i, SERVO_CCW, STM_FT_ID[i][SERVO_CCW], SERVO_POS, INIT_SPEED);
+			printf("SERVO_ccW\n");
+		}
+		PS_SIGx_Pin |= (1<<i);
+	}
+
+	for(int i=0;i<10;i++){
+		ServoMotor_writeDMA(buf);//servo init. must done init within 500*20ms
+		osDelay(500);
+		}
+
+	for(int i=0;i<4;i++){
+		if(FT_flag&(1<<i)){
+			DataSetSteering(buf, i, SERVO_CW, 0, SERVO_INIT, INIT_SPEED);
+			printf("SERVO_cW\n");
+		}
+		else {
+			DataSetSteering(buf, i, SERVO_CCW, 0, SERVO_INIT, INIT_SPEED);
 			printf("SERVO_ccW\n");
 		}
 		PS_SIGx_Pin |= (1<<i);
@@ -691,20 +711,27 @@ void StartTask03(void *argument)
 
 	if(ModeABCD == 1){
 
-		if(Deg2Ste(Xbot_R,0) == 180||Deg2Ste(Xbot_R,0) == -180){Deg2Ste(Xbot_W,0);}
-		if(Tar_cmd_v_x==0&&Tar_cmd_v_y>0){Deg2Ste(Xbot_W,90); Dir_Rot=SERVO_CCW;}
-		else if(Tar_cmd_v_x==0&&Tar_cmd_v_y<0){Deg2Ste(Xbot_W,90); Dir_Rot=SERVO_CW;}
+		if(Deg2Ste(Xbot_R,0) == 180||Deg2Ste(Xbot_R,0) == -180){Deg2Ste(Xbot_W,0);}//forward, rear
+		if(Tar_cmd_v_x==0&&Tar_cmd_v_y>0){Deg2Ste(Xbot_W,90); Dir_Rot=SERVO_CCW;}//left
+		else if(Tar_cmd_v_x==0&&Tar_cmd_v_y<0){Deg2Ste(Xbot_W,90); Dir_Rot=SERVO_CW;}//right
 
-		if		((Tar_cmd_v_x>0) && (Tar_cmd_v_y>0)){/*SteDeg*=1;*/		Dir_Rot=SERVO_CCW; printf("t03 %d\n", SteDeg);}//the first quadrant
-		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y>0)){Deg2Ste(Xbot_W,180-Deg2Ste(Xbot_R,0)); Dir_Rot=SERVO_CW; printf("t03 %d\n", abs(Deg2Ste(Xbot_R,0)));}//the second quadrant
-		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y<0)){Deg2Ste(Xbot_W,180+Deg2Ste(Xbot_R,0)); Dir_Rot=SERVO_CCW; printf("t03 %d\n", abs(Deg2Ste(Xbot_R,0)));}//the third quadrant
-		else if	((Tar_cmd_v_x>0) && (Tar_cmd_v_y<0)){Deg2Ste(Xbot_W,abs(Deg2Ste(Xbot_R,0))); Dir_Rot=SERVO_CW; printf("t03 %d\n", abs(Deg2Ste(Xbot_R,0)));}//the fourth quadrant
+		if		((Tar_cmd_v_x>0) && (Tar_cmd_v_y>0)){/*SteDeg*=1;*/							Dir_Rot=SERVO_CCW; }//the first quadrant
+		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y>0)){Deg2Ste(Xbot_W,180-Deg2Ste(Xbot_R,0)); Dir_Rot=SERVO_CW; }//the second quadrant
+		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y<0)){Deg2Ste(Xbot_W,180+Deg2Ste(Xbot_R,0)); Dir_Rot=SERVO_CCW; }//the third quadrant
+		else if	((Tar_cmd_v_x>0) && (Tar_cmd_v_y<0)){Deg2Ste(Xbot_W,abs(Deg2Ste(Xbot_R,0))); Dir_Rot=SERVO_CW; }//the fourth quadrant
 
 		if((SteDeg>=0) && (SteDeg<=90)){//prevent from angle over range
-			DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS);
-			DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg*100, SERVO_POS);
-			DataSetSteering(buf, STMotorID3, Dir_Rot, SteDeg*100, SERVO_POS);
-			DataSetSteering(buf, STMotorID4, Dir_Rot, SteDeg*100, SERVO_POS);
+			if(Dir_Rot==SERVO_CW){angle = -1*SteDeg;}
+			else{angle = SteDeg;}
+			speed_angle=abs(angle-pre_angle);
+			printf("%d: abs %d %d %d\n", osKernelGetTickCount(), speed_angle, pre_angle, angle);
+			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,speed_angle/180*20);
+			DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,20);
+			if(Dir_Rot==SERVO_CW){pre_angle = -1*SteDeg;}
+			else {pre_angle = SteDeg;}
+			DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg*100, SERVO_POS,20);
+			DataSetSteering(buf, STMotorID3, Dir_Rot, SteDeg*100, SERVO_POS,20);
+			DataSetSteering(buf, STMotorID4, Dir_Rot, SteDeg*100, SERVO_POS,20);
 		}
 	//	printf("Mode A\n");
 	}
@@ -712,20 +739,20 @@ void StartTask03(void *argument)
 	if(ModeABCD == 3){
 //		SteDeg=rad2deg(ANGLE_VEL);
 		Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL));
-		DataSetSteering(buf, STMotorID1, SERVO_CCW, SteDeg*100, SERVO_POS);
-		DataSetSteering(buf, STMotorID2, SERVO_CW, SteDeg*100, SERVO_POS);
-		DataSetSteering(buf, STMotorID3, SERVO_CW, SteDeg*100, SERVO_POS);
-		DataSetSteering(buf, STMotorID4, SERVO_CCW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, STMotorID1, SERVO_CCW, SteDeg*100, SERVO_POS, 20);
+		DataSetSteering(buf, STMotorID2, SERVO_CW, SteDeg*100, SERVO_POS, 20);
+		DataSetSteering(buf, STMotorID3, SERVO_CW, SteDeg*100, SERVO_POS, 20);
+		DataSetSteering(buf, STMotorID4, SERVO_CCW, SteDeg*100, SERVO_POS, 20);
 		//printf("Mode B\n");
 	}
 
 	if(ModeABCD == 4){
 //		SteDeg=rad2deg(ANGLE_VEL);
 		Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL));
-		DataSetSteering(buf, STMotorID1, SERVO_CW, SteDeg*100, SERVO_POS);
-		DataSetSteering(buf, STMotorID2, SERVO_CCW, SteDeg*100, SERVO_POS);
-		DataSetSteering(buf, STMotorID3, SERVO_CCW, SteDeg*100, SERVO_POS);
-		DataSetSteering(buf, STMotorID4, SERVO_CW, SteDeg*100, SERVO_POS);
+		DataSetSteering(buf, STMotorID1, SERVO_CW, SteDeg*100, SERVO_POS, 20); pre_angle = -1*SteDeg;
+		DataSetSteering(buf, STMotorID2, SERVO_CCW, SteDeg*100, SERVO_POS, 20);
+		DataSetSteering(buf, STMotorID3, SERVO_CCW, SteDeg*100, SERVO_POS, 20);
+		DataSetSteering(buf, STMotorID4, SERVO_CW, SteDeg*100, SERVO_POS, 20);
 //		EndModeD = 0;
 		//osDelay(10);
 	//	printf("Mode D\n");
@@ -917,27 +944,27 @@ void StartTask06(void *argument)
 	if(PS_SIGx_Pin&1){//1ch init
 		PS_SIGx_Pin &= ~(1); printf(" PS_SIG1_stop.\n");
 		EndInit |= 1;
-		DataSetSteering(buf, 0, SERVO_CCW, 0, 0);
+		DataSetSteering(buf, 0, SERVO_CCW, 0, 0, 30);
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 
 	if(PS_SIGx_Pin&2){//2ch init
 		PS_SIGx_Pin &= ~(2); printf(" PS_SIG2_stop.\n");
-		DataSetSteering(buf, 1, SERVO_CCW, 0, 0);
+		DataSetSteering(buf, 1, SERVO_CCW, 0, 0, 30);
 		EndInit |= 2;
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}
 	if(PS_SIGx_Pin&4){//3ch init
 		PS_SIGx_Pin &= ~(4); printf(" PS_SIG3_stop.\n");
-		DataSetSteering(buf, 2, SERVO_CCW, 0, 0);
+		DataSetSteering(buf, 2, SERVO_CCW, 0, 0, 30);
 		EndInit |= 4;
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf
 	}	if(PS_SIGx_Pin&8){//4ch init
 		PS_SIGx_Pin &= ~(8); printf(" PS_SIG4_stop.\n");
-		DataSetSteering(buf, 3, SERVO_CCW, 0, 0);
+		DataSetSteering(buf, 3, SERVO_CCW, 0, 0, 30);
 		EndInit |= 8;
 		//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		//for(int i=0;i<48;i++){buf[i]=0;}//clear buf

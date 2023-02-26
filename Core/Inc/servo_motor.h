@@ -30,6 +30,7 @@
 /////////////
 
 #define STOP_SPEED 3  //stop speed * 0.1,  // 0.3, 0.5, 0.7
+#define INIT_SPEED 30  //stop speed * 0.1,  // 0.3, 0.5, 0.7
 extern char checksum_val;
 
 extern UART_HandleTypeDef huart2;
@@ -40,5 +41,5 @@ void ServoMotor_write(const char* str);
 void ServoMotor_writeDMA(const char* str);
 void ServoMotor_control(char direction, unsigned short position, char init);
 uint32_t ServoMotor_read();
-void DataSetSteering(const char* str, char id, char direction, unsigned short position, char init);
+void DataSetSteering(const char* str, char id, char direction, unsigned short position, char init, char speed);
 #endif

@@ -110,7 +110,7 @@ void ServoMotor_control(char direction, unsigned short position, char init)
     
 }
 
-void DataSetSteering(const char* str, char id, char direction, unsigned short position, char init)
+void DataSetSteering(const char* str, char id, char direction, unsigned short position, char init, char speed)
 {
     char buf[12];
 
@@ -124,7 +124,7 @@ void DataSetSteering(const char* str, char id, char direction, unsigned short po
     buf[7]=(char)(position>>8);//position
     buf[8]=(char)position;//position
     if(init == 1){buf[9]=STOP_SPEED;}//stop speed 0.3s>>0.6s 220520>>0.8s 220621
-    else buf[9]=0x1E;//speed, position second = 3s
+    else buf[9]=speed;//speed, position second = 3s
     buf[10]=0x00;//reservation
     buf[11]=0x00;//reservation
 
