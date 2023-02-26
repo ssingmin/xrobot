@@ -233,7 +233,7 @@ void sendCan(uint32_t ID, uint8_t *buf, uint8_t len, uint8_t ext)
         dwCheck = HAL_CAN_AddTxMessage(&hcan1, &tCan_Tx_Header, buf, &dwTxMailBox);
         if(dwCheck != HAL_OK){while(1){;}}
     }
-   // osDelay(1);
+    osDelay(1);//must be
 }
 
 void SDOMsg(uint8_t Node_id,uint16_t index, uint8_t subindex, uint32_t msg, uint8_t len)
