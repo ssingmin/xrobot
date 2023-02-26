@@ -88,8 +88,8 @@ uint8_t ModeABCD = 4;//4 is stop mode
 //uint8_t ModeABCD = 1;//4 is stop mode
 uint8_t Pre_ModeABCD = 0;
 uint8_t STinitdone = 0;
-uint16_t Stop_flag = 0;
-uint16_t Pre_Stop_flag = 0;
+uint32_t Stop_flag = 0;
+uint32_t Pre_Stop_flag = 0;
 //uint8_t EndModeD = 0;
 uint8_t timerflag = 1;
 uint8_t EndMode = 1;
@@ -187,6 +187,11 @@ osMutexId_t DegmsgHandle;
 const osMutexAttr_t Degmsg_attributes = {
   .name = "Degmsg"
 };
+/* Definitions for Stop_flag */
+osMutexId_t Stop_flagHandle;
+const osMutexAttr_t Stop_flag_attributes = {
+  .name = "Stop_flag"
+};
 /* Definitions for PSx_SIG_BinSem */
 osSemaphoreId_t PSx_SIG_BinSemHandle;
 const osSemaphoreAttr_t PSx_SIG_BinSem_attributes = {
@@ -197,10 +202,22 @@ const osSemaphoreAttr_t PSx_SIG_BinSem_attributes = {
 /* USER CODE BEGIN FunctionPrototypes */
 
 
-//int16_t transdata(,uint8_t RW)
-//{
-//
-//}
+int32_t Stopflagcheck(uint8_t RW, uint8_t value)
+{
+	if(osMutexWait(Stop_flagHandle, osWaitForever)==osOK)
+	{
+		if(RW){
+			if(value == 0){Stop_flag = 0;}
+			else {Stop_flag++;}
+			if(Stop_flag>0xfffffff0){Stop_flag = 1;}
+			osMutexRelease(Stop_flagHandle);
+		}
+		else {
+			osMutexRelease(Stop_flagHandle);
+			return Stop_flag;
+		}
+	}
+}
 
 int16_t Deg2Ste(uint8_t RW, int16_t deg)
 {
@@ -288,6 +305,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of Degmsg */
   DegmsgHandle = osMutexNew(&Degmsg_attributes);
+
+  /* creation of Stop_flag */
+  Stop_flagHandle = osMutexNew(&Stop_flag_attributes);
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -438,7 +458,7 @@ void StartTask02(void *argument)
 	}
 
   /* Infinite loop */
-
+	//printf("%d: format\n", osKernelGetTickCount());
 	lastTime = osKernelGetTickCount ();
   for(;;)
   {
@@ -453,10 +473,11 @@ void StartTask02(void *argument)
 		for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[i];}
 	//	printf("canbuf: %d %d %d %d %d %d %d %d\n", canbuf[0], canbuf[1], canbuf[2], canbuf[3], canbuf[4], canbuf[5], canbuf[6], canbuf[7]);
 		FLAG_RxCplt=0;
-		if(g_tCan_Rx_Header.StdId>g_tCan_Rx_Header.ExtId){CanId = g_tCan_Rx_Header.StdId;}//�??????????체크
+		if(g_tCan_Rx_Header.StdId>g_tCan_Rx_Header.ExtId){CanId = g_tCan_Rx_Header.StdId;}//�???????????체크
 		else {CanId = g_tCan_Rx_Header.ExtId;}
 		//printf("canid: %d %d %d\n", CanId, g_tCan_Rx_Header.StdId, g_tCan_Rx_Header.ExtId);
-		if((g_tCan_Rx_Header.StdId>0) && (g_tCan_Rx_Header.ExtId>0)){CanId = 0;}
+		if((g_tCan_Rx_Header.StdId>0) && (g_tCan_Rx_Header.ExtId>0)){CanId = 0;}//must check line about don't received
+
 		switch(CanId)//parse
 		{
 			case 0x3E9:
@@ -464,7 +485,10 @@ void StartTask02(void *argument)
 				Tar_cmd_v_y = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
 				Tar_cmd_w = (((int16_t)canbuf[5])<<8) | ((int16_t)canbuf[4])&0xff;
 				torqueSW = canbuf[6];
-				if(Stop_flag++>255){Stop_flag = 1;}
+				//if(Stop_flag++>255){Stop_flag = 1;}
+				Stopflagcheck(Xbot_W, 1);
+				printf("%d: 0x3E9:%d %d\n", osKernelGetTickCount(),Stop_flag,Pre_Stop_flag);
+				//printf("%d: Stop_flag: %d\n", osKernelGetTickCount(), Stop_flag);
 				break;
 
 			case 0x181:
@@ -554,7 +578,7 @@ void StartTask02(void *argument)
 		Deg2Ste(Xbot_W,rad2deg(ANGLE_RAD));
 	}
 
-	if(((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0))  ||  (Stop_flag==0))
+	if(((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0))  ||  (Stopflagcheck(Xbot_R, 1)==0))
 	{
 		ModeABCD = 4;
 		Pre_ModeABCD = 4;
@@ -934,8 +958,18 @@ void StartTask06(void *argument)
 void VelStopTimerCallback(void *argument)
 {
   /* USER CODE BEGIN VelStopTimerCallback */
-	if(Pre_Stop_flag != Stop_flag){Pre_Stop_flag = Stop_flag;}
-	else {Stop_flag = 0;	}
+
+	//must be check this function
+//	int32_t TmpFlag = Stopflagcheck(Xbot_R, 1);
+//
+//	printf("%d: VelStopTimer:%d %d\n", osKernelGetTickCount(),TmpFlag,Pre_Stop_flag);
+//	if(Pre_Stop_flag != TmpFlag){
+//		Pre_Stop_flag = TmpFlag;
+//		//printf("%d: VelStop1Stop_flag: %d\n", osKernelGetTickCount(), Stop_flag);
+//	}
+//	else {Stopflagcheck(Xbot_W, 0);
+//	printf("%d: VelStop2Stop_flag: %d\n", osKernelGetTickCount(), Stop_flag);
+//	}
   /* USER CODE END VelStopTimerCallback */
 }
 
@@ -966,5 +1000,4 @@ void SendCanTimerCallback(void *argument)
 /* USER CODE BEGIN Application */
 
 /* USER CODE END Application */
-
 
