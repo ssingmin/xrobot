@@ -74,7 +74,7 @@ void ServoMotor_write(const char* str)
 void ServoMotor_writeDMA(const char* str)
 {
     HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_SET);
-    osDelay(6);//because transmit_DMA
+    //osDelay(6);//because transmit_DMA
     if(HAL_UART_Transmit_DMA(&huart3,str, 48)!= HAL_OK){Error_Handler();}
     osDelay(6);//because transmit_DMA
     HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_RESET);

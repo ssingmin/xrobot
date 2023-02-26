@@ -10,6 +10,11 @@
 
 #include "can.h"
 
+enum XbotRW {
+	Xbot_R = 0,
+	Xbot_W = 1,
+};
+
 #define STMotorID1 0
 #define STMotorID2 1
 #define STMotorID3 2

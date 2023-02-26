@@ -28,7 +28,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include "stm32f4xx.h"
+#include "core_cm4.h"
 #include "app.h"
 /* USER CODE END Includes */
 
@@ -64,8 +66,14 @@ void MX_FREERTOS_Init(void);
 int _write(int file, char *ptr, int len)//485 task for nuri motor must change uart port
 {
 	//HAL_UART_Transmit_DMA(&huart2, (uint8_t *)ptr, (uint16_t)len);
-	HAL_UART_Transmit(&huart2, (uint8_t *)ptr, (uint16_t)len, 100);
-	return (len);
+//	HAL_UART_Transmit(&huart2, (uint8_t *)ptr, (uint16_t)len, 100);
+//	return (len);
+//
+	for(int i = 0; i < len; i++)
+	{
+		ITM_SendChar(*ptr++);
+	}
+	return len;
 }
 /* USER CODE END 0 */
 
