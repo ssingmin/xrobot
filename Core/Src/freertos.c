@@ -39,7 +39,7 @@
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim8;
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 0
+#define VERSION_MINOR 1
 
 MappingPar vel_RxPDO0={{0x60ff,0,0,0},//index //target speed
 						{0x03,0,0,0},//subindex //left and rigt target speed combination
@@ -90,8 +90,9 @@ uint8_t Pre_ModeABCD = 0;
 uint8_t STinitdone = 0;
 uint16_t Stop_flag = 0;
 uint16_t Pre_Stop_flag = 0;
-uint8_t EndModeD = 0;
+//uint8_t EndModeD = 0;
 uint8_t timerflag = 1;
+uint8_t EndMode = 1;
 
 char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
@@ -200,6 +201,26 @@ const osSemaphoreAttr_t PSx_SIG_BinSem_attributes = {
 //{
 //
 //}
+
+int16_t Deg2Ste(uint8_t RW, int16_t deg)
+{
+	if(osMutexWait(DegmsgHandle, osWaitForever)==osOK)
+	{
+		if(RW){//write
+			SteDeg = deg; printf("%d:deg in mut:%d \n", osKernelGetTickCount(), SteDeg);
+			osMutexRelease(DegmsgHandle);
+			return 1;
+		}
+		else{//read
+			osMutexRelease(DegmsgHandle);
+			return SteDeg;
+		}
+	}
+	else{
+		printf("%d:mutex in \n", osKernelGetTickCount());
+		return 0;
+	}
+}
 
 int16_t rad2deg(double radian)
 {
@@ -470,60 +491,69 @@ void StartTask02(void *argument)
 	}
 
 	if(Tar_cmd_w){
-		Tar_cmd_v_x=0;
-		Tar_cmd_v_y=0;
 
-		Tar_cmd_FL = Tar_cmd_w/CONSTANT_C_AxC_V;
+		ModeABCD = 3;
 
-		if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
-		if(Tar_cmd_FL<-50){Tar_cmd_FL=-50;}
-		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
-
-		Real_cmd_w = CONSTANT_C_AxC_V*Tar_cmd_FL;
-
-		ModeABCD = 2;
-
-		if(Pre_ModeABCD!=ModeABCD){
+		if((Pre_ModeABCD!=ModeABCD) || (EndMode==0)){
 			//printf("111osTimerStart: %d, %d\n", ModeABCD, Pre_ModeABCD);
 			Pre_ModeABCD = ModeABCD;
+			Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
 			if(timerflag){
 				//printf("timerflag: %d\n", timerflag);
 				osTimerStart(EndModeDTimerHandle, 3000);
 				timerflag = 0;
+				EndMode = 0;
 			}
+		}
+		else {
+			Tar_cmd_v_x=0;
+			Tar_cmd_v_y=0;
+
+			Tar_cmd_FL = Tar_cmd_w/CONSTANT_C_AxC_V;
+
+			if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
+			if(Tar_cmd_FL<-50){Tar_cmd_FL=-50;}
+			Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
+
+			Real_cmd_w = CONSTANT_C_AxC_V*Tar_cmd_FL;
 		}
 	}
 
 	else if(Tar_cmd_v_x|Tar_cmd_v_y){
-		Tar_cmd_FL = CONSTANT_VEL  *  (Tar_cmd_v_x*cos(ANGLE_RAD) + Tar_cmd_v_y*sin(ANGLE_RAD));
-	//	printf("Tar_cmd_FL: %d %d\n", Tar_cmd_v_x, Tar_cmd_v_y);
 
-		if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
-		if(Tar_cmd_FL<-50){Tar_cmd_FL=-50;}
-		Tar_cmd_FR = -Tar_cmd_FL;
-		Tar_cmd_RL = Tar_cmd_FL;
-		Tar_cmd_RR = -Tar_cmd_FL;
-
-		if(Tar_cmd_v_x<0){
-			Tar_cmd_FL*=-1;
-			Tar_cmd_FR*=-1;
-			Tar_cmd_RL*=-1;
-			Tar_cmd_RR*=-1;
-		}
-
-		SteDeg=rad2deg(ANGLE_RAD);
 		ModeABCD = 1;
 
-		if(Pre_ModeABCD!=ModeABCD){
+		if((Pre_ModeABCD!=ModeABCD) || (EndMode==0)){
 			//printf("111osTimerStart: %d, %d\n", ModeABCD, Pre_ModeABCD);
 			Pre_ModeABCD = ModeABCD;
+			Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
 			if(timerflag){
 				//printf("timerflag: %d\n", timerflag);
 				osTimerStart(EndModeDTimerHandle, 3000);
 				timerflag = 0;
+				EndMode = 0;
 			}
 		}
+		else{
+			Tar_cmd_FL = CONSTANT_VEL  *  (Tar_cmd_v_x*cos(ANGLE_RAD) + Tar_cmd_v_y*sin(ANGLE_RAD));
+
+			if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
+			if(Tar_cmd_FL<-50){Tar_cmd_FL=-50;}
+			Tar_cmd_FR = -Tar_cmd_FL;
+			Tar_cmd_RL = Tar_cmd_FL;
+			Tar_cmd_RR = -Tar_cmd_FL;
+
+			if(Tar_cmd_v_x<0){
+				Tar_cmd_FL*=-1;
+				Tar_cmd_FR*=-1;
+				Tar_cmd_RL*=-1;
+				Tar_cmd_RR*=-1;
+			}
+		}
+		//SteDeg=rad2deg(ANGLE_RAD);
+		Deg2Ste(Xbot_W,rad2deg(ANGLE_RAD));
 	}
+
 	if(((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0))  ||  (Stop_flag==0))
 	{
 		ModeABCD = 4;
@@ -556,25 +586,6 @@ void StartTask02(void *argument)
 * @retval None
 */
 
-int16_t Deg2Ste(uint8_t RW, int16_t deg)
-{
-	if(osMutexWait(DegmsgHandle, osWaitForever)==osOK)
-	{
-		if(RW){//write
-			SteDeg = deg; printf("%d:deg in mut:%d \n", osKernelGetTickCount(), SteDeg);
-			osMutexRelease(DegmsgHandle);
-			return 1;
-		}
-		else{//read
-			osMutexRelease(DegmsgHandle);
-			return SteDeg;
-		}
-	}
-	else{
-		printf("%d:mutex in \n", osKernelGetTickCount());
-		return 0;
-	}
-}
 /* USER CODE END Header_StartTask03 */
 void StartTask03(void *argument)
 {
@@ -674,7 +685,7 @@ void StartTask03(void *argument)
 	//	printf("Mode A\n");
 	}
 
-	if(ModeABCD == 2){
+	if(ModeABCD == 3){
 //		SteDeg=rad2deg(ANGLE_VEL);
 		Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL));
 		DataSetSteering(buf, STMotorID1, SERVO_CCW, SteDeg*100, SERVO_POS);
@@ -691,7 +702,7 @@ void StartTask03(void *argument)
 		DataSetSteering(buf, STMotorID2, SERVO_CCW, SteDeg*100, SERVO_POS);
 		DataSetSteering(buf, STMotorID3, SERVO_CCW, SteDeg*100, SERVO_POS);
 		DataSetSteering(buf, STMotorID4, SERVO_CW, SteDeg*100, SERVO_POS);
-		EndModeD = 0;
+//		EndModeD = 0;
 		//osDelay(10);
 	//	printf("Mode D\n");
 	}
@@ -932,8 +943,9 @@ void VelStopTimerCallback(void *argument)
 void EndModeDTimerCallback(void *argument)
 {
   /* USER CODE BEGIN EndModeDTimerCallback */
-	EndModeD = 1;
+	//EndModeD = 1;
 	timerflag = 1;
+	EndMode = 1;
   /* USER CODE END EndModeDTimerCallback */
 }
 
