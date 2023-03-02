@@ -120,12 +120,14 @@ void DataSetSteering(const char* str, char id, char direction, unsigned short po
     buf[3]=0x06;//length
     buf[4]=0x00;//checksum
     buf[5]=0x02 + init;//mode,  2=position control mode , 3=speed control mode
+    if(init == 2){buf[5]=0x01;}
     buf[6]=direction;//direction ccw=0x00, cw=0x01
     buf[7]=(char)(position>>8);//position
     buf[8]=(char)position;//position
-    if(init == 1){buf[9]=STOP_SPEED;}//stop speed 0.3s>>0.6s 220520>>0.8s 220621
-    else buf[9]=speed;//speed, position second = 3s
-    buf[10]=0x00;//reservation
+    if(init == 1){buf[9]=STOP_SPEED;buf[10]=0x00;}//stop speed 0.3s>>0.6s 220520>>0.8s 220621
+    else if(init == 0) {buf[9]=speed;buf[10]=0x00;}//speed, position second = 3s
+    else if(init == 2) {buf[9]=0;buf[10]=speed;}//speed, position second = 3s
+    //buf[10]=0x00;//reservation
     buf[11]=0x00;//reservation
 
     //FF FE 00 06 EC 03 00 00 00 0A

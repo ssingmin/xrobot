@@ -39,7 +39,7 @@
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim8;
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 2
+#define VERSION_MINOR 4
 
 MappingPar vel_RxPDO0={{0x60ff,0,0,0},//index //target speed
 						{0x03,0,0,0},//subindex //left and rigt target speed combination
@@ -431,14 +431,8 @@ void StartTask02(void *argument)
 
 	osDelay(3000);//must delay for nmt from motor driver
 	while(!(STinitdone)){osDelay(100);;}
-	//CanInit(0x280,0xFFC,STDID);
 
-	//CanInit(FILTERID,MASKID,STDID);//must be to use it
-	CanInit(0,0,STDID);//must be to use it
-
-//	CanInit2(0xf1a,0xFFF,EXTID);
-//	CanInit(FILTERID,MASKID,EXTID);//reservation
-	//CanInit(0,0,EXTID);
+	CanInit(FILTERID,MASKID,STDID);//must be to use it
 	CAN_enableirq();
 
 
@@ -470,48 +464,50 @@ void StartTask02(void *argument)
 
 	if(FLAG_RxCplt>0)	//real time, check stdid, extid
 	{
-		for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[i];}
-	//	printf("canbuf: %d %d %d %d %d %d %d %d\n", canbuf[0], canbuf[1], canbuf[2], canbuf[3], canbuf[4], canbuf[5], canbuf[6], canbuf[7]);
-		FLAG_RxCplt=0;
-		if(g_tCan_Rx_Header.StdId>g_tCan_Rx_Header.ExtId){CanId = g_tCan_Rx_Header.StdId;}//�???????????체크
-		else {CanId = g_tCan_Rx_Header.ExtId;}
-		//printf("canid: %d %d %d\n", CanId, g_tCan_Rx_Header.StdId, g_tCan_Rx_Header.ExtId);
-		if((g_tCan_Rx_Header.StdId>0) && (g_tCan_Rx_Header.ExtId>0)){CanId = 0;}//must check line about don't received
+		while(FLAG_RxCplt>0){
+			FLAG_RxCplt--;
+			for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[FLAG_RxCplt][i];}
+		//	printf("canbuf: %d %d %d %d %d %d %d %d\n", canbuf[0], canbuf[1], canbuf[2], canbuf[3], canbuf[4], canbuf[5], canbuf[6], canbuf[7]);
+			printf("canid: %d %d %d\n", g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].Timestamp);
+			if(g_tCan_Rx_Header[FLAG_RxCplt].StdId>g_tCan_Rx_Header[FLAG_RxCplt].ExtId){CanId = g_tCan_Rx_Header[FLAG_RxCplt].StdId;}//�???????????체크
+			else {CanId = g_tCan_Rx_Header[FLAG_RxCplt].ExtId;}
 
-		switch(CanId)//parse
-		{
-			case 0x3E9:
-				Tar_cmd_v_x = (((int16_t)canbuf[1])<<8) | ((int16_t)canbuf[0])&0xff;
-				Tar_cmd_v_y = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
-				Tar_cmd_w = (((int16_t)canbuf[5])<<8) | ((int16_t)canbuf[4])&0xff;
-				torqueSW = canbuf[6];
-				//if(Stop_flag++>255){Stop_flag = 1;}
-				Stopflagcheck(Xbot_W, 1);
-				printf("%d: 0x3E9:%d %d\n", osKernelGetTickCount(),Stop_flag,Pre_Stop_flag);
-				//printf("%d: Stop_flag: %d\n", osKernelGetTickCount(), Stop_flag);
-				break;
+			switch(CanId)//parse
+			{
+				case 0x3E9:
+					Tar_cmd_v_x = (((int16_t)canbuf[1])<<8) | ((int16_t)canbuf[0])&0xff;
+					Tar_cmd_v_y = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
+					Tar_cmd_w = (((int16_t)canbuf[5])<<8) | ((int16_t)canbuf[4])&0xff;
+					torqueSW = canbuf[6];
+					//if(Stop_flag++>255){Stop_flag = 1;}
+					Stopflagcheck(Xbot_W, 1);
+					printf("%d: 0x3E9:%d %d\n", osKernelGetTickCount(),Stop_flag,Pre_Stop_flag);
+					//printf("%d: Stop_flag: %d\n", osKernelGetTickCount(), Stop_flag);
+					break;
 
-			case 0x181:
-				Tmp_cmd_FL = (((int16_t)canbuf[1])<<8) | ((int16_t)canbuf[0])&0xff;
-				Tmp_cmd_FR = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
-				//printf("0x181 %d\n", Tmp_cmd_FL);
-				break;
+				case 0x181:
+					Tmp_cmd_FL = (((int16_t)canbuf[1])<<8) | ((int16_t)canbuf[0])&0xff;
+					Tmp_cmd_FR = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
+					//printf("0x181 %d\n", Tmp_cmd_FL);
+					break;
 
-			case 0x182:
-				Tmp_cmd_RL = (((int16_t)canbuf[1])<<8) | ((int16_t)canbuf[0])&0xff;
-				Tmp_cmd_RR = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
-				break;
+				case 0x182:
+					Tmp_cmd_RL = (((int16_t)canbuf[1])<<8) | ((int16_t)canbuf[0])&0xff;
+					Tmp_cmd_RR = (((int16_t)canbuf[3])<<8) | ((int16_t)canbuf[2])&0xff;
+					break;
 
-			case 2002:
+				case 2002:
 
-				break;
+					break;
+			}
+
+			g_tCan_Rx_Header[FLAG_RxCplt].StdId=0;
+			g_tCan_Rx_Header[FLAG_RxCplt].ExtId=0;
+			CanId = 0;
+
+			for(int i=0;i<8;i++){canbuf[i]=0;}
 		}
 
-		g_tCan_Rx_Header.StdId=0;
-		g_tCan_Rx_Header.ExtId=0;
-		CanId = 0;
-
-		for(int i=0;i<8;i++){canbuf[i]=0;}
 	}
 
 	if(Tar_cmd_w){
@@ -723,12 +719,15 @@ void StartTask03(void *argument)
 		if((SteDeg>=0) && (SteDeg<=90)){//prevent from angle over range
 			if(Dir_Rot==SERVO_CW){angle = -1*SteDeg;}
 			else{angle = SteDeg;}
-			speed_angle=abs(angle-pre_angle);
+			if(pre_angle != angle){speed_angle=abs(angle-pre_angle);}
 			printf("%d: abs %d %d %d\n", osKernelGetTickCount(), speed_angle, pre_angle, angle);
 			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,speed_angle/180*20);
 			DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,20);
-			if(Dir_Rot==SERVO_CW){pre_angle = -1*SteDeg;}
-			else {pre_angle = SteDeg;}
+			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, -1,50);
+
+			if(Dir_Rot==SERVO_CW)	{pre_angle = -1*SteDeg;}
+			else					{pre_angle = SteDeg;}
+
 			DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg*100, SERVO_POS,20);
 			DataSetSteering(buf, STMotorID3, Dir_Rot, SteDeg*100, SERVO_POS,20);
 			DataSetSteering(buf, STMotorID4, Dir_Rot, SteDeg*100, SERVO_POS,20);
@@ -749,7 +748,8 @@ void StartTask03(void *argument)
 	if(ModeABCD == 4){
 //		SteDeg=rad2deg(ANGLE_VEL);
 		Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL));
-		DataSetSteering(buf, STMotorID1, SERVO_CW, SteDeg*100, SERVO_POS, 20); pre_angle = -1*SteDeg;
+		DataSetSteering(buf, STMotorID1, SERVO_CW, SteDeg*100, SERVO_POS, 20);
+		//DataSetSteering(buf, STMotorID1, SERVO_CW, SteDeg*100, -1, 50); pre_angle = -1*SteDeg;
 		DataSetSteering(buf, STMotorID2, SERVO_CCW, SteDeg*100, SERVO_POS, 20);
 		DataSetSteering(buf, STMotorID3, SERVO_CCW, SteDeg*100, SERVO_POS, 20);
 		DataSetSteering(buf, STMotorID4, SERVO_CW, SteDeg*100, SERVO_POS, 20);

@@ -24,10 +24,8 @@
 
 uint32_t FLAG_RxCplt = 0;
 
-int8_t					g_uCAN_Rx_Data[8] = {0,};
-uint8_t					g_uCAN_Rx_Data2[8] = {0,};
-CAN_RxHeaderTypeDef 	g_tCan_Rx_Header;
-CAN_RxHeaderTypeDef 	g_tCan_Rx_Header2;
+int8_t					g_uCAN_Rx_Data[6][8] = {0,};//6 is trash can. never used
+CAN_RxHeaderTypeDef 	g_tCan_Rx_Header[6];//6 is trash can. never used
 
 CAN_FilterTypeDef       sFilterConfig;
 CAN_FilterTypeDef       sFilterConfig2;
@@ -338,12 +336,20 @@ void Tor_OnOff(uint8_t OnOff)
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 {
   /* Get RX message */
-	if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &g_tCan_Rx_Header, g_uCAN_Rx_Data) != HAL_OK){while(1){;}}
-//	osDelay(10);
-//	printf("g_uCAN_Rx_Data: %x %x %x %x %x %x %x %x \n", g_uCAN_Rx_Data[0], g_uCAN_Rx_Data[1], g_uCAN_Rx_Data[2], g_uCAN_Rx_Data[3],
-//													g_uCAN_Rx_Data[4], g_uCAN_Rx_Data[5], g_uCAN_Rx_Data[6], g_uCAN_Rx_Data[7]);
-//	printf("%d: RF\n", osKernelGetTickCount());
-	FLAG_RxCplt=1;
+	if(FLAG_RxCplt<5)
+	{
+		if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &g_tCan_Rx_Header[FLAG_RxCplt], g_uCAN_Rx_Data[FLAG_RxCplt]) != HAL_OK){while(1){;}}
+		printf("%d: RF %d %d %d\n", osKernelGetTickCount(),
+				g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].IDE);
+		FLAG_RxCplt++;
+	}
+	else{
+		if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &g_tCan_Rx_Header[6], g_uCAN_Rx_Data[6]) != HAL_OK){while(1){;}}
+		printf("%d: RF_TC %d %d %d\n", osKernelGetTickCount(),
+						g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].IDE);
+	}
+
+
 }
 
 /* USER CODE END 1 */
