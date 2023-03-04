@@ -15,9 +15,9 @@
 extern TIM_HandleTypeDef htim8;
 
 #define BIT_PERIOD      (104)
-#define BIT_HIGH        (67)
-#define BIT_LOW         (33)
-#define CYCLE_RESET		(60)
+#define BIT_HIGH        (52)
+#define BIT_LOW         (35)
+#define CYCLE_RESET		(100)
 
 #define TOTALNUM		(NUM_NPLED)
 

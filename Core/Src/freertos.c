@@ -39,7 +39,7 @@
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim8;
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 4
+#define VERSION_MINOR 5
 
 
 MappingPar vel_RxPDO0={{0x60ff,0,0,0},//index //target speed
@@ -470,7 +470,7 @@ void StartTask02(void *argument)
 			for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[FLAG_RxCplt][i];}
 		//	printf("canbuf: %d %d %d %d %d %d %d %d\n", canbuf[0], canbuf[1], canbuf[2], canbuf[3], canbuf[4], canbuf[5], canbuf[6], canbuf[7]);
 			printf("%dcanid: %d %d %d\n", osKernelGetTickCount(), g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].Timestamp);
-			if(g_tCan_Rx_Header[FLAG_RxCplt].StdId>g_tCan_Rx_Header[FLAG_RxCplt].ExtId){CanId = g_tCan_Rx_Header[FLAG_RxCplt].StdId;}//�???????????체크
+			if(g_tCan_Rx_Header[FLAG_RxCplt].StdId>g_tCan_Rx_Header[FLAG_RxCplt].ExtId){CanId = g_tCan_Rx_Header[FLAG_RxCplt].StdId;}//�?????????????체크
 			else {CanId = g_tCan_Rx_Header[FLAG_RxCplt].ExtId;}
 
 			switch(CanId)//parse
@@ -725,7 +725,7 @@ void StartTask03(void *argument)
 				speed_angle=abs(angle-pre_angle);
 				printf("%d: pre_angle != angle %d %d %d\n", osKernelGetTickCount(), speed_angle, pre_angle, angle);
 				pre_angle = angle;
-			}//계산 다시...132도에서 90도를 빼네
+			}//계산 ?��?��...132?��?��?�� 90?���?? 빼네
 
 			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,(speed_angle/9));
 			DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,20);
@@ -787,7 +787,8 @@ void StartTask04(void *argument)
 	static int temp = 0;
 	////////////////////////////////
 
-
+	ws2812AllColor(70,70,70);//r, g, b
+	ws2812NumOn(NUM_NPLED);
   /* Infinite loop */
   for(;;)
   {
@@ -813,8 +814,7 @@ void StartTask04(void *argument)
 				break;
 		}
 
-		ws2812AllColor(10,10,10);//r, g, b
-		ws2812NumOn(NUM_NPLED);
+
 		//printf("task4\n");
   }
   /* USER CODE END StartTask04 */
@@ -865,7 +865,7 @@ void StartTask06(void *argument)
   for(;;)
   {
 	  osDelay(10);
-	  printf("%d: t06\n", osKernelGetTickCount());
+	//  printf("%d: t06\n", osKernelGetTickCount());
 	if(PS_SIGx_Pin&1){//1ch init
 		PS_SIGx_Pin &= ~(1); printf(" PS_SIG1_stop.\n");
 		EndInit |= 1;

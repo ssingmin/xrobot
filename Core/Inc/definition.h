@@ -34,7 +34,7 @@ enum XbotRW {
 #define PERIOD_FAN 500U
 #define PERIOD_IRQ_PSx 10U
 
-#define NUM_NPLED 24
+#define NUM_NPLED 29
 
 //unit is mm
 #define MATH_PI 3.14159265358979323846
