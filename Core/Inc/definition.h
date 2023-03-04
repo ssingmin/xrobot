@@ -15,6 +15,8 @@ enum XbotRW {
 	Xbot_W = 1,
 };
 
+#define ENDMODETIME 2000
+
 #define STMotorID1 0
 #define STMotorID2 1
 #define STMotorID3 2

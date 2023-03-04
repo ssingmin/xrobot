@@ -41,6 +41,7 @@ extern TIM_HandleTypeDef htim8;
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 4
 
+
 MappingPar vel_RxPDO0={{0x60ff,0,0,0},//index //target speed
 						{0x03,0,0,0},//subindex //left and rigt target speed combination
 						{0x20,0,0,0},//length //32bit
@@ -94,7 +95,7 @@ uint32_t Pre_Stop_flag = 0;
 uint8_t timerflag = 1;
 uint8_t EndMode = 1;
 
-char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
+uint8_t buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
 					25, 26, 27, 28, 29, 30, 31, 32,	33, 34, 35, 36,		//3 rear right
 					37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48	};	//4 rear left
@@ -468,7 +469,7 @@ void StartTask02(void *argument)
 			FLAG_RxCplt--;
 			for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[FLAG_RxCplt][i];}
 		//	printf("canbuf: %d %d %d %d %d %d %d %d\n", canbuf[0], canbuf[1], canbuf[2], canbuf[3], canbuf[4], canbuf[5], canbuf[6], canbuf[7]);
-			printf("canid: %d %d %d\n", g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].Timestamp);
+			printf("%dcanid: %d %d %d\n", osKernelGetTickCount(), g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].Timestamp);
 			if(g_tCan_Rx_Header[FLAG_RxCplt].StdId>g_tCan_Rx_Header[FLAG_RxCplt].ExtId){CanId = g_tCan_Rx_Header[FLAG_RxCplt].StdId;}//�???????????체크
 			else {CanId = g_tCan_Rx_Header[FLAG_RxCplt].ExtId;}
 
@@ -520,7 +521,7 @@ void StartTask02(void *argument)
 			Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
 			if(timerflag){
 				//printf("timerflag: %d\n", timerflag);
-				osTimerStart(EndModeDTimerHandle, 3000);
+				osTimerStart(EndModeDTimerHandle, ENDMODETIME);
 				timerflag = 0;
 				EndMode = 0;
 			}
@@ -549,7 +550,7 @@ void StartTask02(void *argument)
 			Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
 			if(timerflag){
 				//printf("timerflag: %d\n", timerflag);
-				osTimerStart(EndModeDTimerHandle, 3000);
+				osTimerStart(EndModeDTimerHandle, ENDMODETIME);
 				timerflag = 0;
 				EndMode = 0;
 			}
@@ -557,8 +558,8 @@ void StartTask02(void *argument)
 		else{
 			Tar_cmd_FL = CONSTANT_VEL  *  (Tar_cmd_v_x*cos(ANGLE_RAD) + Tar_cmd_v_y*sin(ANGLE_RAD));
 
-			if(Tar_cmd_FL>50){Tar_cmd_FL=50;}
-			if(Tar_cmd_FL<-50){Tar_cmd_FL=-50;}
+			if(Tar_cmd_FL>100){Tar_cmd_FL=100;}
+			if(Tar_cmd_FL<-100){Tar_cmd_FL=-100;}
 			Tar_cmd_FR = -Tar_cmd_FL;
 			Tar_cmd_RL = Tar_cmd_FL;
 			Tar_cmd_RR = -Tar_cmd_FL;
@@ -719,14 +720,19 @@ void StartTask03(void *argument)
 		if((SteDeg>=0) && (SteDeg<=90)){//prevent from angle over range
 			if(Dir_Rot==SERVO_CW){angle = -1*SteDeg;}
 			else{angle = SteDeg;}
-			if(pre_angle != angle){speed_angle=abs(angle-pre_angle);}
 			printf("%d: abs %d %d %d\n", osKernelGetTickCount(), speed_angle, pre_angle, angle);
-			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,speed_angle/180*20);
+			if(pre_angle != angle){
+				speed_angle=abs(angle-pre_angle);
+				printf("%d: pre_angle != angle %d %d %d\n", osKernelGetTickCount(), speed_angle, pre_angle, angle);
+				pre_angle = angle;
+			}//계산 다시...132도에서 90도를 빼네
+
+			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,(speed_angle/9));
 			DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,20);
 			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, -1,50);
-
-			if(Dir_Rot==SERVO_CW)	{pre_angle = -1*SteDeg;}
-			else					{pre_angle = SteDeg;}
+			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, 2, 150);
+			//if(Dir_Rot==SERVO_CW)	{pre_angle = -1*pre_angle;}
+			//else					{pre_angle = pre_angle;}
 
 			DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg*100, SERVO_POS,20);
 			DataSetSteering(buf, STMotorID3, Dir_Rot, SteDeg*100, SERVO_POS,20);
@@ -748,8 +754,9 @@ void StartTask03(void *argument)
 	if(ModeABCD == 4){
 //		SteDeg=rad2deg(ANGLE_VEL);
 		Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL));
-		DataSetSteering(buf, STMotorID1, SERVO_CW, SteDeg*100, SERVO_POS, 20);
-		//DataSetSteering(buf, STMotorID1, SERVO_CW, SteDeg*100, -1, 50); pre_angle = -1*SteDeg;
+		//DataSetSteering(buf, STMotorID1, SERVO_CW, SteDeg*100, SERVO_POS, 20);
+		//DataSetSteering(buf, STMotorID1, SERVO_CW, SteDeg*100, 2, 250); pre_angle = -1*SteDeg;
+		DataSetSteering(buf, STMotorID1, SERVO_CW, SteDeg*100, SERVO_POS,20); pre_angle = -1*SteDeg;
 		DataSetSteering(buf, STMotorID2, SERVO_CCW, SteDeg*100, SERVO_POS, 20);
 		DataSetSteering(buf, STMotorID3, SERVO_CCW, SteDeg*100, SERVO_POS, 20);
 		DataSetSteering(buf, STMotorID4, SERVO_CW, SteDeg*100, SERVO_POS, 20);
@@ -792,103 +799,21 @@ void StartTask04(void *argument)
 		switch (temp) {
 			case 1:
 				//printf("case1\n");
-				ws2812SetColor(0,0,0,1);//index, r, g, b
-				ws2812SetColor(1,0,1,0);//index, r, g, b
-				ws2812SetColor(2,1,0,0);//index, r, g, b
-				ws2812SetColor(3,0,0,1);//index, r, g, b
-				ws2812SetColor(4,0,1,0);//index, r, g, b
-				ws2812SetColor(5,1,0,0);//index, r, g, b
-				ws2812SetColor(6,0,0,1);//index, r, g, b
-				ws2812SetColor(7,0,1,0);//index, r, g, b
+			//	ws2812SetColor(0,0,0,1);//index, r, g, b
 				break;
+
 			case 2:
 				//printf("case2\n");
-				ws2812SetColor(7,0,0,1);//index, r, g, b
-				ws2812SetColor(0,0,1,0);//index, r, g, b
-				ws2812SetColor(1,1,0,0);//index, r, g, b
-				ws2812SetColor(2,0,0,1);//index, r, g, b
-				ws2812SetColor(3,0,1,0);//index, r, g, b
-				ws2812SetColor(4,1,0,0);//index, r, g, b
-				ws2812SetColor(5,0,0,1);//index, r, g, b
-				ws2812SetColor(6,0,1,0);//index, r, g, b
+			//	ws2812SetColor(7,0,0,1);//index, r, g, b
 				break;
+
 			case 3:
 				//printf("case3\n");
-				ws2812SetColor(6,0,0,1);//index, r, g, b
-				ws2812SetColor(7,0,1,0);//index, r, g, b
-				ws2812SetColor(0,1,0,0);//index, r, g, b
-				ws2812SetColor(1,0,0,1);//index, r, g, b
-				ws2812SetColor(2,0,1,0);//index, r, g, b
-				ws2812SetColor(3,1,0,0);//index, r, g, b
-				ws2812SetColor(4,0,0,1);//index, r, g, b
-				ws2812SetColor(5,0,1,0);//index, r, g, b
-				break;
-			case 4:
-				//printf("case4\n");
-				ws2812SetColor(5,0,0,1);//index, r, g, b
-				ws2812SetColor(6,0,1,0);//index, r, g, b
-				ws2812SetColor(7,1,0,0);//index, r, g, b
-				ws2812SetColor(0,0,0,1);//index, r, g, b
-				ws2812SetColor(1,0,1,0);//index, r, g, b
-				ws2812SetColor(2,1,0,0);//index, r, g, b
-				ws2812SetColor(3,0,0,1);//index, r, g, b
-				ws2812SetColor(4,0,1,0);//index, r, g, b
-				break;
-			case 5:
-				//printf("case5\n");
-				ws2812SetColor(4,0,0,1);//index, r, g, b
-				ws2812SetColor(5,0,1,0);//index, r, g, b
-				ws2812SetColor(6,1,0,0);//index, r, g, b
-				ws2812SetColor(7,0,0,1);//index, r, g, b
-				ws2812SetColor(0,0,1,0);//index, r, g, b
-				ws2812SetColor(1,1,0,0);//index, r, g, b
-				ws2812SetColor(2,0,0,1);//index, r, g, b
-				ws2812SetColor(3,0,1,0);//index, r, g, b
-				ws2812SetColor(8,0,0,1);//index, r, g, b
-				ws2812SetColor(9,0,1,0);//index, r, g, b
-
-				break;
-			case 6:
-				//printf("case6\n");
-				ws2812SetColor(3,0,0,1);//index, r, g, b
-				ws2812SetColor(4,0,1,0);//index, r, g, b
-				ws2812SetColor(5,1,0,0);//index, r, g, b
-				ws2812SetColor(6,0,0,1);//index, r, g, b
-				ws2812SetColor(7,0,1,0);//index, r, g, b
-				ws2812SetColor(0,1,0,0);//index, r, g, b
-				ws2812SetColor(1,0,0,1);//index, r, g, b
-				ws2812SetColor(2,0,1,0);//index, r, g, b
-				ws2812SetColor(8,0,1,1);//index, r, g, b
-				ws2812SetColor(9,1,1,0);//index, r, g, b
-				break;
-			case 7:
-				//printf("case7\n");
-				ws2812SetColor(2,0,0,1);//index, r, g, b
-				ws2812SetColor(3,0,1,0);//index, r, g, b
-				ws2812SetColor(4,1,0,0);//index, r, g, b
-				ws2812SetColor(5,0,0,1);//index, r, g, b
-				ws2812SetColor(6,0,1,0);//index, r, g, b
-				ws2812SetColor(7,1,0,0);//index, r, g, b
-				ws2812SetColor(0,0,0,1);//index, r, g, b
-				ws2812SetColor(1,0,1,0);//index, r, g, b
-				break;
-			case 8:
-				//printf("case8\n");
-				ws2812SetColor(1,0,0,1);//index, r, g, b
-				ws2812SetColor(2,0,1,0);//index, r, g, b
-				ws2812SetColor(3,1,0,0);//index, r, g, b
-				ws2812SetColor(4,0,0,1);//index, r, g, b
-				ws2812SetColor(5,0,1,0);//index, r, g, b
-				ws2812SetColor(6,1,0,0);//index, r, g, b
-				ws2812SetColor(7,0,0,1);//index, r, g, b
-				ws2812SetColor(0,0,1,0);//index, r, g, b
-				ws2812SetColor(8,1,1,1);//index, r, g, b
-				ws2812SetColor(9,1,1,1);//index, r, g, b
-				temp=1;
+				//ws2812SetColor(6,0,0,1);//index, r, g, b
 				break;
 		}
 
-		ws2812AllColor(0,0,0);//r, g, b
+		ws2812AllColor(10,10,10);//r, g, b
 		ws2812NumOn(NUM_NPLED);
 		//printf("task4\n");
   }
@@ -987,16 +912,16 @@ void VelStopTimerCallback(void *argument)
   /* USER CODE BEGIN VelStopTimerCallback */
 
 	//must be check this function
-//	int32_t TmpFlag = Stopflagcheck(Xbot_R, 1);
-//
-//	printf("%d: VelStopTimer:%d %d\n", osKernelGetTickCount(),TmpFlag,Pre_Stop_flag);
-//	if(Pre_Stop_flag != TmpFlag){
-//		Pre_Stop_flag = TmpFlag;
-//		//printf("%d: VelStop1Stop_flag: %d\n", osKernelGetTickCount(), Stop_flag);
-//	}
-//	else {Stopflagcheck(Xbot_W, 0);
-//	printf("%d: VelStop2Stop_flag: %d\n", osKernelGetTickCount(), Stop_flag);
-//	}
+	int32_t TmpFlag = Stopflagcheck(Xbot_R, 1);
+
+	printf("%d: VelStopTimer:%d %d\n", osKernelGetTickCount(),TmpFlag,Pre_Stop_flag);
+	if(Pre_Stop_flag != TmpFlag){
+		Pre_Stop_flag = TmpFlag;
+		//printf("%d: VelStop1Stop_flag: %d\n", osKernelGetTickCount(), Stop_flag);
+	}
+	else {Stopflagcheck(Xbot_W, 0);
+	printf("%d: VelStop2Stop_flag: %d\n", osKernelGetTickCount(), Stop_flag);
+	}
   /* USER CODE END VelStopTimerCallback */
 }
 

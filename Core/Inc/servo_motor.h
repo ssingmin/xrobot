@@ -9,7 +9,7 @@
 #define SERVO_CW	0
 #define SERVO_CCW	1
 
-#define SERVO_BUFLEN  10  //max length of nurirobot protocol
+#define SERVO_BUFLEN  11  //max length of nurirobot protocol
 
 #define SERVO_ORIGIN_VAL 1050 // 0->open, 2000->close, resolution 0.01 degree
 #define SERVO_OPEN  1,9000-SERVO_ORIGIN_VAL,0  //direction= ccw, position 90 degree, normal
@@ -37,9 +37,9 @@ extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 
 void baudrate_reinit();
-void ServoMotor_write(const char* str);
-void ServoMotor_writeDMA(const char* str);
-void ServoMotor_control(char direction, unsigned short position, char init);
+void ServoMotor_write(const uint8_t* str);
+void ServoMotor_writeDMA(const uint8_t* str);
+void ServoMotor_control(uint8_t direction, unsigned short position, uint8_t init);
 uint32_t ServoMotor_read();
-void DataSetSteering(const char* str, char id, char direction, unsigned short position, char init, char speed);
+void DataSetSteering(const uint8_t* str, uint8_t id, uint8_t direction, unsigned short position, uint8_t init, uint8_t speed);
 #endif

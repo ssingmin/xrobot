@@ -54,7 +54,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	printf("H_URCBf\n");
 }
 
-void ServoMotor_write(const char* str)
+void ServoMotor_write(const uint8_t* str)
 {
     HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_SET);
     if(Read_flag == 1){
@@ -71,7 +71,7 @@ void ServoMotor_write(const char* str)
     HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_RESET);
 }
 
-void ServoMotor_writeDMA(const char* str)
+void ServoMotor_writeDMA(const uint8_t* str)
 {
     HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_SET);
     //osDelay(6);//because transmit_DMA
@@ -80,12 +80,12 @@ void ServoMotor_writeDMA(const char* str)
     HAL_GPIO_WritePin(RS485_DE_GPIO_Port, RS485_DE_Pin, GPIO_PIN_RESET);
 }
 
-void ServoMotor_control(char direction, unsigned short position, char init)
+void ServoMotor_control(uint8_t direction, unsigned short position, uint8_t init)
 {
     //  {0xFF,0xFE,0x00,0x06,0xA2,0x02,0x00,0x23,0x28,0x0A,0,0};
     //char checksum_val = 0;
     //#define BMC_open  1,9000,0  //direction= ccw, position 90degree, normal
-    char buf[12];
+	uint8_t buf[12];
     buf[0]=0xFF;//header
     buf[1]=0xFE;//header
     buf[2]=0x00;//id fixed
@@ -110,26 +110,28 @@ void ServoMotor_control(char direction, unsigned short position, char init)
     
 }
 
-void DataSetSteering(const char* str, char id, char direction, unsigned short position, char init, char speed)
+void DataSetSteering(const uint8_t* str, uint8_t id, uint8_t direction, unsigned short position, uint8_t init, uint8_t speed)
 {
-    char buf[12];
+	uint8_t buf[12];
 
     buf[0]=0xFF;//header
     buf[1]=0xFE;//header
     buf[2]=id;//id fixed
     buf[3]=0x06;//length
+    if(init == 2){buf[3]=0x07;}
     buf[4]=0x00;//checksum
     buf[5]=0x02 + init;//mode,  2=position control mode , 3=speed control mode
     if(init == 2){buf[5]=0x01;}
     buf[6]=direction;//direction ccw=0x00, cw=0x01
     buf[7]=(char)(position>>8);//position
     buf[8]=(char)position;//position
-    if(init == 1){buf[9]=STOP_SPEED;buf[10]=0x00;}//stop speed 0.3s>>0.6s 220520>>0.8s 220621
-    else if(init == 0) {buf[9]=speed;buf[10]=0x00;}//speed, position second = 3s
-    else if(init == 2) {buf[9]=0;buf[10]=speed;}//speed, position second = 3s
+    printf("%d: speed0 %d\n", osKernelGetTickCount(), init);
+    if(init == 1){buf[9]=STOP_SPEED;buf[10]=0x00; printf("%d: speed1\n", osKernelGetTickCount());}//stop speed 0.3s>>0.6s 220520>>0.8s 220621
+    else if(init == 0) {buf[9]=speed;buf[10]=0x00; printf("%d: speed2\n", osKernelGetTickCount());}//speed, position second = 3s
+    else if(init == 2) {buf[9]=0;buf[10]=speed; printf("%d: speed3\n", osKernelGetTickCount());}//speed, position second = 3s
     //buf[10]=0x00;//reservation
     buf[11]=0x00;//reservation
-
+    printf("%d: DSS %d %d %d\n", osKernelGetTickCount(), speed, buf[9], buf[10]);
     //FF FE 00 06 EC 03 00 00 00 0A
     //0  1  2  3  4  5  6  7  8  9
     for(int i=2;i<SERVO_BUFLEN;i++) {checksum_val += buf[i];}//checksum ~(Packet 2 + Packet 3 + Packet 5 + … + Packet N) [1byte]

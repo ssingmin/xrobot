@@ -60,8 +60,8 @@ extern CAN_HandleTypeDef hcan1;
 //010 00110 0000	//0x460
 //111 11010 0001	//0xFA1
 
-#define FILTERID 0x280
-#define MASKID 0xE94
+#define FILTERID 0x80
+#define MASKID 0xC94
 #define STDID 0x0
 #define EXTID 0x1
 ///////////////////////////////////////
