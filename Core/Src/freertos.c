@@ -536,7 +536,9 @@ void StartTask02(void *argument)
 			if(Tar_cmd_FL<-50){Tar_cmd_FL=-50;}
 			Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
 
-			Real_cmd_w = CONSTANT_C_AxC_V*Tar_cmd_FL;
+			Real_cmd_w = CONSTANT_C_AxC_V*Tmp_cmd_FL;
+			Real_cmd_v_x = 0;
+			Real_cmd_v_y = 0;
 		}
 	}
 
@@ -573,6 +575,10 @@ void StartTask02(void *argument)
 		}
 		//SteDeg=rad2deg(ANGLE_RAD);
 		Deg2Ste(Xbot_W,rad2deg(ANGLE_RAD));
+
+		Real_cmd_v_x = CONSTANT_VEL2*Tmp_cmd_FL*cos(ANGLE_RAD)/10;
+		Real_cmd_v_y = CONSTANT_VEL2*Tmp_cmd_FL*sin(ANGLE_RAD)/10;
+		Real_cmd_w = 0;
 	}
 
 	if(((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0))  ||  (Stopflagcheck(Xbot_R, 1)==0))
@@ -580,10 +586,13 @@ void StartTask02(void *argument)
 		ModeABCD = 4;
 		Pre_ModeABCD = 4;
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
+			Real_cmd_v_x = CONSTANT_VEL2*Tmp_cmd_FL*cos(ANGLE_RAD)/10;
+			Real_cmd_v_y = CONSTANT_VEL2*Tmp_cmd_FL*sin(ANGLE_RAD)/10;
+			Real_cmd_w = Real_cmd_w = CONSTANT_C_AxC_V*Tmp_cmd_FL;;
 	}
 
-	Real_cmd_v_x = CONSTANT_VEL2*Tmp_cmd_FL*cos(ANGLE_RAD)/10;
-	Real_cmd_v_y = CONSTANT_VEL2*Tmp_cmd_FL*sin(ANGLE_RAD)/10;
+//	Real_cmd_v_x = CONSTANT_VEL2*Tmp_cmd_FL*cos(ANGLE_RAD)/10;
+//	Real_cmd_v_y = CONSTANT_VEL2*Tmp_cmd_FL*sin(ANGLE_RAD)/10;
 //	Real_cmd_w = 0;
 
 
@@ -725,7 +734,7 @@ void StartTask03(void *argument)
 				speed_angle=abs(angle-pre_angle);
 				printf("%d: pre_angle != angle %d %d %d\n", osKernelGetTickCount(), speed_angle, pre_angle, angle);
 				pre_angle = angle;
-			}//계산 ?��?��...132?��?��?�� 90?���?? 빼네
+			}
 
 			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,(speed_angle/9));
 			DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,20);
@@ -789,23 +798,23 @@ void StartTask04(void *argument)
 
 	ws2812AllColor(70,70,70);//r, g, b
 	ws2812NumOn(NUM_NPLED);
+
   /* Infinite loop */
   for(;;)
   {
 		lastTime += PERIOD_NP_LED;
 		osDelayUntil(lastTime);
 
-
 		temp++;
 		switch (temp) {
 			case 1:
 				//printf("case1\n");
-			//	ws2812SetColor(0,0,0,1);//index, r, g, b
+				//ws2812SetColor(0,0,0,1);//index, r, g, b
 				break;
 
 			case 2:
 				//printf("case2\n");
-			//	ws2812SetColor(7,0,0,1);//index, r, g, b
+				//ws2812SetColor(7,0,0,1);//index, r, g, b
 				break;
 
 			case 3:
@@ -834,12 +843,13 @@ void StartTask05(void *argument)
 
 	fanInit();
 
+
   /* Infinite loop */
   for(;;)
   {
 	lastTime += PERIOD_FAN;
 	osDelayUntil(lastTime);
-	fanOn(30);
+	fanOn(100);
 	//htim1.Instance->CCR1 = 50;
 	//printf("task5\n");
 
