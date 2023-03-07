@@ -104,19 +104,28 @@ int16_t Tar_cmd_v_x = 0;
 int16_t Tar_cmd_v_y = 0;
 int16_t Tar_cmd_w = 0;
 
-int8_t canbuf[8]={0,};
-int8_t sendcanbuf[8]={0,};
+int16_t Real_cmd_v_x = 0;
+int16_t Real_cmd_v_y = 0;
+int16_t Real_cmd_w = 0;
 
-uint32_t CanId = 0;
+int16_t Tmp_cmd_FL = 0;
+int16_t Tmp_cmd_FR = 0;
+int16_t Tmp_cmd_RL= 0;
+int16_t Tmp_cmd_RR = 0;
 
 int16_t Tar_cmd_FL = 0;//Front Left
 int16_t Tar_cmd_FR = 0;//Front Right
 int16_t Tar_cmd_RL= 0;//Rear Left
 int16_t Tar_cmd_RR = 0;//Rear Right
 
-int16_t Real_cmd_v_x = 0;
-int16_t Real_cmd_v_y = 0;
-int16_t Real_cmd_w = 0;
+int8_t canbuf[8]={0,};
+int8_t sendcanbuf[8]={0,};
+
+uint32_t CanId = 0;
+
+
+
+
 
 uint8_t EndInit = 0;
 
@@ -203,6 +212,14 @@ const osSemaphoreAttr_t PSx_SIG_BinSem_attributes = {
 /* USER CODE BEGIN FunctionPrototypes */
 
 
+
+void Cal_Real_cmd(void)
+{
+	Real_cmd_v_x = CONSTANT_VEL2*((Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR)/4)/10*fabs(cos(ANGLE_RAD));
+	Real_cmd_v_y = CONSTANT_VEL2*((Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR)/4)/10*fabs(sin(ANGLE_RAD));
+	Real_cmd_w = -(CONSTANT_C_AxC_V*((Tmp_cmd_FL+Tmp_cmd_RL+Tmp_cmd_FR+Tmp_cmd_RR)/4))/10;
+}
+
 int32_t Stopflagcheck(uint8_t RW, uint8_t value)
 {
 	if(osMutexWait(Stop_flagHandle, osWaitForever)==osOK)
@@ -225,7 +242,7 @@ int16_t Deg2Ste(uint8_t RW, int16_t deg)
 	if(osMutexWait(DegmsgHandle, osWaitForever)==osOK)
 	{
 		if(RW){//write
-			SteDeg = deg; printf("%d:deg in mut:%d \n", osKernelGetTickCount(), SteDeg);
+	//		SteDeg = deg; printf("%d:deg in mut:%d \n", osKernelGetTickCount(), SteDeg);
 			osMutexRelease(DegmsgHandle);
 			return 1;
 		}
@@ -235,7 +252,7 @@ int16_t Deg2Ste(uint8_t RW, int16_t deg)
 		}
 	}
 	else{
-		printf("%d:mutex in \n", osKernelGetTickCount());
+//		printf("%d:mutex in \n", osKernelGetTickCount());
 		return 0;
 	}
 }
@@ -416,10 +433,7 @@ void StartTask02(void *argument)
 //	int16_t Tar_cmd_v_y = 0;
 //	int16_t Tar_cmd_w = 0;
 
-	int16_t Tmp_cmd_FL = 0;
-	int16_t Tmp_cmd_FR = 0;
-	int16_t Tmp_cmd_RL= 0;
-	int16_t Tmp_cmd_RR = 0;
+
 
 	uint8_t torqueSW = 0;
 	uint8_t Oncetimer = 1;
@@ -461,7 +475,7 @@ void StartTask02(void *argument)
 	lastTime += PERIOD_CANCOMM;;
 	osDelayUntil(lastTime);
 	//osDelay(10);
-	printf("%d: t02\n", osKernelGetTickCount());
+	//printf("%d: t02\n", osKernelGetTickCount());
 
 	if(FLAG_RxCplt>0)	//real time, check stdid, extid
 	{
@@ -469,7 +483,7 @@ void StartTask02(void *argument)
 			FLAG_RxCplt--;
 			for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[FLAG_RxCplt][i];}
 		//	printf("canbuf: %d %d %d %d %d %d %d %d\n", canbuf[0], canbuf[1], canbuf[2], canbuf[3], canbuf[4], canbuf[5], canbuf[6], canbuf[7]);
-			printf("%dcanid: %d %d %d\n", osKernelGetTickCount(), g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].Timestamp);
+			//printf("%dcanid: %d %d %d\n", osKernelGetTickCount(), g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].Timestamp);
 			if(g_tCan_Rx_Header[FLAG_RxCplt].StdId>g_tCan_Rx_Header[FLAG_RxCplt].ExtId){CanId = g_tCan_Rx_Header[FLAG_RxCplt].StdId;}//�?????????????체크
 			else {CanId = g_tCan_Rx_Header[FLAG_RxCplt].ExtId;}
 
@@ -482,7 +496,7 @@ void StartTask02(void *argument)
 					torqueSW = canbuf[6];
 					//if(Stop_flag++>255){Stop_flag = 1;}
 					Stopflagcheck(Xbot_W, 1);
-					printf("%d: 0x3E9:%d %d\n", osKernelGetTickCount(),Stop_flag,Pre_Stop_flag);
+					//printf("%d: 0x3E9:%d %d\n", osKernelGetTickCount(),Stop_flag,Pre_Stop_flag);
 					//printf("%d: Stop_flag: %d\n", osKernelGetTickCount(), Stop_flag);
 					break;
 
@@ -536,9 +550,10 @@ void StartTask02(void *argument)
 			if(Tar_cmd_FL<-50){Tar_cmd_FL=-50;}
 			Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
 
-			Real_cmd_w = CONSTANT_C_AxC_V*Tmp_cmd_FL;
-			Real_cmd_v_x = 0;
-			Real_cmd_v_y = 0;
+//			Real_cmd_v_x = CONSTANT_VEL2*((Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR)/4)/10*cos(ANGLE_RAD);
+//			Real_cmd_v_y = CONSTANT_VEL2*((Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR)/4)/10*sin(ANGLE_RAD);
+//			Real_cmd_w = -(CONSTANT_C_AxC_V*((Tmp_cmd_FL+Tmp_cmd_RL+Tmp_cmd_FR+Tmp_cmd_RR)/4))/10;
+			Cal_Real_cmd();
 		}
 	}
 
@@ -576,9 +591,10 @@ void StartTask02(void *argument)
 		//SteDeg=rad2deg(ANGLE_RAD);
 		Deg2Ste(Xbot_W,rad2deg(ANGLE_RAD));
 
-		Real_cmd_v_x = CONSTANT_VEL2*Tmp_cmd_FL*cos(ANGLE_RAD)/10;
-		Real_cmd_v_y = CONSTANT_VEL2*Tmp_cmd_FL*sin(ANGLE_RAD)/10;
-		Real_cmd_w = 0;
+//		Real_cmd_v_x = CONSTANT_VEL2*((Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR)/4)/10*fabs(cos(ANGLE_RAD));
+//		Real_cmd_v_y = CONSTANT_VEL2*((Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR)/4)/10*sin(ANGLE_RAD);
+//		Real_cmd_w = -(CONSTANT_C_AxC_V*((Tmp_cmd_FL+Tmp_cmd_RL+Tmp_cmd_FR+Tmp_cmd_RR)/4))/10;
+		Cal_Real_cmd();
 	}
 
 	if(((Tar_cmd_v_x==0) && (Tar_cmd_v_y==0) && (Tar_cmd_w==0))  ||  (Stopflagcheck(Xbot_R, 1)==0))
@@ -586,9 +602,10 @@ void StartTask02(void *argument)
 		ModeABCD = 4;
 		Pre_ModeABCD = 4;
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
-			Real_cmd_v_x = CONSTANT_VEL2*Tmp_cmd_FL*cos(ANGLE_RAD)/10;
-			Real_cmd_v_y = CONSTANT_VEL2*Tmp_cmd_FL*sin(ANGLE_RAD)/10;
-			Real_cmd_w = Real_cmd_w = CONSTANT_C_AxC_V*Tmp_cmd_FL;;
+//		Real_cmd_v_x = CONSTANT_VEL2*((Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR)/4)*cos(ANGLE_RAD)/10;
+//		Real_cmd_v_y = CONSTANT_VEL2*((Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR)/4)*sin(ANGLE_RAD)/10;
+//		Real_cmd_w = CONSTANT_C_AxC_V*((Tmp_cmd_FL+Tmp_cmd_RL+Tmp_cmd_FR+Tmp_cmd_RR)/4);
+		Cal_Real_cmd();
 	}
 
 //	Real_cmd_v_x = CONSTANT_VEL2*Tmp_cmd_FL*cos(ANGLE_RAD)/10;
@@ -747,17 +764,18 @@ void StartTask03(void *argument)
 			DataSetSteering(buf, STMotorID3, Dir_Rot, SteDeg*100, SERVO_POS,20);
 			DataSetSteering(buf, STMotorID4, Dir_Rot, SteDeg*100, SERVO_POS,20);
 		}
-	//	printf("Mode A\n");
+		printf("Mode A\n");
 	}
 
 	if(ModeABCD == 3){
 //		SteDeg=rad2deg(ANGLE_VEL);
 		Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL));
+		printf("%d: abs %d\n", osKernelGetTickCount(), SteDeg);
 		DataSetSteering(buf, STMotorID1, SERVO_CCW, SteDeg*100, SERVO_POS, 20);
 		DataSetSteering(buf, STMotorID2, SERVO_CW, SteDeg*100, SERVO_POS, 20);
 		DataSetSteering(buf, STMotorID3, SERVO_CW, SteDeg*100, SERVO_POS, 20);
 		DataSetSteering(buf, STMotorID4, SERVO_CCW, SteDeg*100, SERVO_POS, 20);
-		//printf("Mode B\n");
+		printf("Mode c\n");
 	}
 
 	if(ModeABCD == 4){
@@ -771,7 +789,7 @@ void StartTask03(void *argument)
 		DataSetSteering(buf, STMotorID4, SERVO_CW, SteDeg*100, SERVO_POS, 20);
 //		EndModeD = 0;
 		//osDelay(10);
-	//	printf("Mode D\n");
+		printf("Mode D\n");
 	}
 	//osDelay(10);
 	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea

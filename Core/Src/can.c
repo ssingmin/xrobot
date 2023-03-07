@@ -208,7 +208,7 @@ void CanInit2(uint32_t id, uint32_t mask, uint8_t EXT_Select)
     }
 }
 
-void sendCan(uint32_t ID, uint8_t *buf, uint8_t len, uint8_t ext)
+void sendCan(uint32_t ID, int8_t *buf, uint8_t len, uint8_t ext)
 {
 
 	CAN_TxHeaderTypeDef tCan_Tx_Header;

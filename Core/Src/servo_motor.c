@@ -126,12 +126,12 @@ void DataSetSteering(const uint8_t* str, uint8_t id, uint8_t direction, unsigned
     buf[7]=(char)(position>>8);//position
     buf[8]=(char)position;//position
     printf("%d: speed0 %d\n", osKernelGetTickCount(), init);
-    if(init == 1){buf[9]=STOP_SPEED;buf[10]=0x00; printf("%d: speed1\n", osKernelGetTickCount());}//stop speed 0.3s>>0.6s 220520>>0.8s 220621
-    else if(init == 0) {buf[9]=speed;buf[10]=0x00; printf("%d: speed2\n", osKernelGetTickCount());}//speed, position second = 3s
-    else if(init == 2) {buf[9]=0;buf[10]=speed; printf("%d: speed3\n", osKernelGetTickCount());}//speed, position second = 3s
+    if(init == 1){buf[9]=STOP_SPEED;buf[10]=0x00; }//stop speed 0.3s>>0.6s 220520>>0.8s 220621
+    else if(init == 0) {buf[9]=speed;buf[10]=0x00; }//speed, position second = 3s
+    else if(init == 2) {buf[9]=0;buf[10]=speed; }//speed, position second = 3s
     //buf[10]=0x00;//reservation
     buf[11]=0x00;//reservation
-    printf("%d: DSS %d %d %d\n", osKernelGetTickCount(), speed, buf[9], buf[10]);
+    //printf("%d: DSS %d %d %d\n", osKernelGetTickCount(), speed, buf[9], buf[10]);
     //FF FE 00 06 EC 03 00 00 00 0A
     //0  1  2  3  4  5  6  7  8  9
     for(int i=2;i<SERVO_BUFLEN;i++) {checksum_val += buf[i];}//checksum ~(Packet 2 + Packet 3 + Packet 5 + … + Packet N) [1byte]
