@@ -242,7 +242,7 @@ int16_t Deg2Ste(uint8_t RW, int16_t deg)
 	if(osMutexWait(DegmsgHandle, osWaitForever)==osOK)
 	{
 		if(RW){//write
-	//		SteDeg = deg; printf("%d:deg in mut:%d \n", osKernelGetTickCount(), SteDeg);
+			SteDeg = deg; //printf("%d:deg in mut:%d \n", osKernelGetTickCount(), SteDeg);
 			osMutexRelease(DegmsgHandle);
 			return 1;
 		}
