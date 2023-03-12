@@ -339,14 +339,14 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 	if(FLAG_RxCplt<5)
 	{
 		if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &g_tCan_Rx_Header[FLAG_RxCplt], g_uCAN_Rx_Data[FLAG_RxCplt]) != HAL_OK){while(1){;}}
-		printf("%d: RF %d %d %d\n", osKernelGetTickCount(),
-				g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].IDE);
+//		printf("%d: RF %d %d %d\n", osKernelGetTickCount(),
+//				g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].IDE);
 		FLAG_RxCplt++;
 	}
 	else{
 		if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &g_tCan_Rx_Header[6], g_uCAN_Rx_Data[6]) != HAL_OK){while(1){;}}
-		printf("%d: RF_TC %d %d %d\n", osKernelGetTickCount(),
-						g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].IDE);
+//		printf("%d: RF_TC %d %d %d\n", osKernelGetTickCount(),
+//						g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].IDE);
 	}
 
 

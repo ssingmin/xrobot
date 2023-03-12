@@ -12,4 +12,4 @@
 ../Core/Src/can.c:305:6:PDOMsg	16	static
 ../Core/Src/can.c:310:6:Vel_PDOMsg	32	static
 ../Core/Src/can.c:323:6:Tor_OnOff	32	static
-../Core/Src/can.c:336:6:HAL_CAN_RxFifo0MsgPendingCallback	32	static
+../Core/Src/can.c:336:6:HAL_CAN_RxFifo0MsgPendingCallback	16	static

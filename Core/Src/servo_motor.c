@@ -125,7 +125,7 @@ void DataSetSteering(const uint8_t* str, uint8_t id, uint8_t direction, unsigned
     buf[6]=direction;//direction ccw=0x00, cw=0x01
     buf[7]=(char)(position>>8);//position
     buf[8]=(char)position;//position
-    printf("%d: speed0 %d\n", osKernelGetTickCount(), init);
+    //printf("%d: speed0 %d\n", osKernelGetTickCount(), init);
     if(init == 1){buf[9]=STOP_SPEED;buf[10]=0x00; }//stop speed 0.3s>>0.6s 220520>>0.8s 220621
     else if(init == 0) {buf[9]=speed;buf[10]=0x00; }//speed, position second = 3s
     else if(init == 2) {buf[9]=0;buf[10]=speed; }//speed, position second = 3s
