@@ -237,16 +237,29 @@ void debugcansend(int8_t * tmp)
 void Cal_Real_cmd(void)
 {
 
-	Real_cmd_v_x = C_2PIRxINv60*(((double)(Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR))/4)/10*fabs(cos(ANGLE_RAD_A));
-	Real_cmd_v_y = C_2PIRxINv60*((Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR)/4)/10*fabs(sin(ANGLE_RAD_A));
+	double tempi;
+	double tempo;
+
+	tempi=(double)(Tmp_cmd_FL+Tmp_cmd_RL)/(2*10);
+	tempo=-(double)(Tmp_cmd_FR+Tmp_cmd_RR)/(2*10);
+//	Real_cmd_v_x = C_2PIRxINv60*(((double)(Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR))/4)/10*fabs(cos(ANGLE_RAD_A));
+//	Real_cmd_v_y = C_2PIRxINv60*(((double)(Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR))/4)/10*fabs(sin(ANGLE_RAD_A));
+
+//	Real_cmd_v_x = (C_2PIRxINv60/2)*((sin(angle_rad_i)*tempi/2)+(sin(angle_rad_o)*tempo/2))/sin(angle_rad_c);
+	if(angle_rad_c == 0){
+		Real_cmd_v_x = C_2PIRxINv60*(((double)(Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR))/4)/10*fabs(cos(ANGLE_RAD_A));
+	}
+	else{
+		Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(angle_rad_i)/sin(angle_rad_c))*tempi)+((sin(angle_rad_o)/sin(angle_rad_c))*tempo));
+	}
 
 	if((Tmp_cmd_FL>0) && (Tmp_cmd_FR>0)  ||  (Tmp_cmd_FL<0) && (Tmp_cmd_FR<0))//mode C
 	{
 		Real_cmd_w = -(CONSTANT_C_AxC_V*((Tmp_cmd_FL+Tmp_cmd_RL+Tmp_cmd_FR+Tmp_cmd_RR)/4))/10;
 	}
-	else//mode B
+	else//mode B find reason to become real_cmd_w to zero
 	{
-		Real_cmd_w = -(C_4PIRxINv60WB*((Tmp_cmd_FL+Tmp_cmd_FR)/2)*fabs(sin(angle_rad_c)))/10;
+		Real_cmd_w = -(C_4PIRxINv60WB*((tempi+tempo)/2)*fabs(sin(angle_rad_c)))/10;
 	}
 
 	sendcanbuf[5] = (((int16_t)(Real_cmd_w)))>>8 & 0xff;
