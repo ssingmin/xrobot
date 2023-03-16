@@ -39,7 +39,7 @@
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim8;
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 5
+#define VERSION_MINOR 6
 
 
 MappingPar vel_RxPDO0={{0x60ff,0,0,0},//index //target speed
@@ -237,29 +237,53 @@ void debugcansend(int8_t * tmp)
 void Cal_Real_cmd(void)
 {
 
-	double tempi;
-	double tempo;
+	double tempL;
+	double tempR;
 
-	tempi=(double)(Tmp_cmd_FL+Tmp_cmd_RL)/(2*10);
-	tempo=-(double)(Tmp_cmd_FR+Tmp_cmd_RR)/(2*10);
+	tempL=(double)(Tmp_cmd_FL+Tmp_cmd_RL)/(2*10);
+	tempR=-(double)(Tmp_cmd_FR+Tmp_cmd_RR)/(2*10);
 //	Real_cmd_v_x = C_2PIRxINv60*(((double)(Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR))/4)/10*fabs(cos(ANGLE_RAD_A));
 //	Real_cmd_v_y = C_2PIRxINv60*(((double)(Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR))/4)/10*fabs(sin(ANGLE_RAD_A));
 
-//	Real_cmd_v_x = (C_2PIRxINv60/2)*((sin(angle_rad_i)*tempi/2)+(sin(angle_rad_o)*tempo/2))/sin(angle_rad_c);
+//	Real_cmd_v_x = (C_2PIRxINv60/2)*((sin(angle_rad_i)*tempL/2)+(sin(angle_rad_o)*tempR/2))/sin(angle_rad_c);
 	if(angle_rad_c == 0){
-		Real_cmd_v_x = C_2PIRxINv60*(((double)(Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR))/4)/10*fabs(cos(ANGLE_RAD_A));
+//		Real_cmd_v_x = C_2PIRxINv60*(((double)(Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR))/4)*fabs(cos(ANGLE_RAD_A));
+		Real_cmd_v_x = C_2PIRxINv60*((tempL+tempR)/2)*fabs(cos(ANGLE_RAD_A));
 	}
 	else{
-		Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(angle_rad_i)/sin(angle_rad_c))*tempi)+((sin(angle_rad_o)/sin(angle_rad_c))*tempo));
+		if((tempL<tempR)  &&  ((tempL>0) && (tempR>0))){
+			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(angle_rad_i)/sin(angle_rad_c))*tempL)
+				+((sin(angle_rad_o)/sin(angle_rad_c))*tempR));
+		}
+
+		else if((tempL>tempR)  &&  ((tempL>0) && (tempR>0))){
+			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(angle_rad_i)/sin(angle_rad_c))*tempR)
+				+((sin(angle_rad_o)/sin(angle_rad_c))*tempL));
+		}
+
+		else if((tempL<tempR)  &&  ((tempL<0) && (tempR<0))){
+			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(angle_rad_i)/sin(angle_rad_c))*tempR)
+				+((sin(angle_rad_o)/sin(angle_rad_c))*tempL));
+		}
+
+		else if((tempL>tempR)  &&  ((tempL<0) && (tempR<0))){
+			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(angle_rad_i)/sin(angle_rad_c))*tempL)
+				+((sin(angle_rad_o)/sin(angle_rad_c))*tempR));
+		}
 	}
 
 	if((Tmp_cmd_FL>0) && (Tmp_cmd_FR>0)  ||  (Tmp_cmd_FL<0) && (Tmp_cmd_FR<0))//mode C
 	{
-		Real_cmd_w = -(CONSTANT_C_AxC_V*((Tmp_cmd_FL+Tmp_cmd_RL+Tmp_cmd_FR+Tmp_cmd_RR)/4))/10;
+		Real_cmd_w = -(CONSTANT_C_AxC_V*((tempL-tempR)/2));
 	}
-	else//mode B find reason to become real_cmd_w to zero
+	else//mode B
 	{
-		Real_cmd_w = -(C_4PIRxINv60WB*((tempi+tempo)/2)*fabs(sin(angle_rad_c)))/10;
+//		Real_cmd_w = (C_4PIRxINv60WB*((tempL+tempR)/2)*fabs(sin(angle_rad_c)))*1000;
+		if		((tempL<tempR)  &&  ((tempL>0) && (tempR>0))){Real_cmd_w = ((Real_cmd_v_x*sin(angle_rad_c))/230)*1000;}
+		else if	((tempL>tempR)  &&  ((tempL>0) && (tempR>0))){Real_cmd_w = -((Real_cmd_v_x*sin(angle_rad_c))/230)*1000;}
+		else if	((tempL<tempR)  &&  ((tempL<0) && (tempR<0))){Real_cmd_w = -((Real_cmd_v_x*sin(angle_rad_c))/230)*1000;}
+		else if	((tempL>tempR)  &&  ((tempL<0) && (tempR<0))){Real_cmd_w = ((Real_cmd_v_x*sin(angle_rad_c))/230)*1000;}
+
 	}
 
 	sendcanbuf[5] = (((int16_t)(Real_cmd_w)))>>8 & 0xff;
