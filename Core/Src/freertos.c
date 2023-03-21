@@ -272,7 +272,7 @@ void Cal_Real_cmd(void)
 		}
 	}
 
-	if((Tmp_cmd_FL>0) && (Tmp_cmd_FR>0)  ||  (Tmp_cmd_FL<0) && (Tmp_cmd_FR<0))//mode C
+	if((Tmp_cmd_FL>=0) && (Tmp_cmd_FR>=0)  ||  (Tmp_cmd_FL<=0) && (Tmp_cmd_FR<=0))//mode C
 	{
 		Real_cmd_w = -(CONSTANT_C_AxC_V*((tempL-tempR)/2));
 	}
@@ -626,7 +626,7 @@ void StartTask02(void *argument)
 			Tar_cmd_v_x=0;
 			Tar_cmd_v_y=0;
 
-			Tar_cmd_FL = -1*(Tar_cmd_w/CONSTANT_C_AxC_V);
+			Tar_cmd_FL = -1*((Tar_cmd_w*CONSTANT_C_AxC_V)/SIGNIFICANT_FIGURES);
 
 			if(Tar_cmd_FL>LIMIT_W){Tar_cmd_FL=LIMIT_W;}
 			if(Tar_cmd_FL<-LIMIT_W){Tar_cmd_FL=-LIMIT_W;}
@@ -776,8 +776,8 @@ void StartTask02(void *argument)
 
 	if(((temp_x==0) && (temp_y==0) && (temp_w==0))  ||  (Stopflagcheck(Xbot_R, 1)==0))
 	{
-		ModeABCD = 4;
-		Pre_ModeABCD = 4;
+		//ModeABCD = 4;//temp
+		//Pre_ModeABCD = 4;//temp
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
 
 		Cal_Real_cmd();
