@@ -39,7 +39,7 @@
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim8;
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 6
+#define VERSION_MINOR 7
 
 
 MappingPar vel_RxPDO0={{0x60ff,0,0,0},//index //target speed
@@ -138,10 +138,6 @@ int8_t canbuf[8]={0,};
 int8_t sendcanbuf[8]={0,};
 
 uint32_t CanId = 0;
-
-
-
-
 
 uint8_t EndInit = 0;
 
@@ -692,8 +688,8 @@ void StartTask02(void *argument)
 		else{
 			//Tar_cmd_FL = CONSTANT_VEL  *  (Tar_cmd_v_x*cos(ANGLE_RAD_B) + Tar_cmd_v_y*sin(ANGLE_RAD_B));
 
-			if(Tar_cmd_v_x>1000){Tar_cmd_v_x=1000;}
-			if(Tar_cmd_v_x<-1000){Tar_cmd_v_x=-1000;}
+			if(Tar_cmd_v_x>LIMIT_V){Tar_cmd_v_x=LIMIT_V;}
+			if(Tar_cmd_v_x<-LIMIT_V){Tar_cmd_v_x=-LIMIT_V;}
 
 			angle_rad_c = fabs(asin(((230*Tar_cmd_w)/(Tar_cmd_v_x*1000))));
 			angle_rad_i = fabs(atan2(230,(230/tan(angle_rad_c))-209.5));
@@ -809,6 +805,7 @@ void StartTask03(void *argument)
 	int32_t angle = 0;
 	int32_t pre_angle = 0;
 	int32_t speed_angle = 0;
+	int32_t SAngle[4] = {0,};
 //	char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 //					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
 //					25, 26, 27, 28, 29, 30, 31, 32,	33, 34, 35, 36,		//3 rear right
@@ -898,37 +895,38 @@ void StartTask03(void *argument)
 	printf("%d: t03\n", osKernelGetTickCount());
 
 	if(ModeABCD == 1){
+#if 0
+		if(Deg2Ste(Xbot_R,0) == 180||Deg2Ste(Xbot_R,0) == -180){Deg2Ste(Xbot_W,0);}//forward, rear
+		if(Tar_cmd_v_x==0&&Tar_cmd_v_y>0){Deg2Ste(Xbot_W,90); Dir_Rot=SERVO_CCW;}//left
+		else if(Tar_cmd_v_x==0&&Tar_cmd_v_y<0){Deg2Ste(Xbot_W,90); Dir_Rot=SERVO_CW;}//right
 
-//		if(Deg2Ste(Xbot_R,0) == 180||Deg2Ste(Xbot_R,0) == -180){Deg2Ste(Xbot_W,0);}//forward, rear
-//		if(Tar_cmd_v_x==0&&Tar_cmd_v_y>0){Deg2Ste(Xbot_W,90); Dir_Rot=SERVO_CCW;}//left
-//		else if(Tar_cmd_v_x==0&&Tar_cmd_v_y<0){Deg2Ste(Xbot_W,90); Dir_Rot=SERVO_CW;}//right
-//
-//		if		((Tar_cmd_v_x>0) && (Tar_cmd_v_y>0)){/*SteDeg*=1;*/							Dir_Rot=SERVO_CCW; }//the first quadrant
-//		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y>0)){Deg2Ste(Xbot_W,180-Deg2Ste(Xbot_R,0)); Dir_Rot=SERVO_CCW; }//the second quadrant
-//		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y<0)){Deg2Ste(Xbot_W,180+Deg2Ste(Xbot_R,0)); Dir_Rot=SERVO_CW; }//the third quadrant
-//		else if	((Tar_cmd_v_x>0) && (Tar_cmd_v_y<0)){Deg2Ste(Xbot_W,abs(Deg2Ste(Xbot_R,0))); Dir_Rot=SERVO_CW; }//the fourth quadrant
-//
-//		if((SteDeg>=0) && (SteDeg<=90)){//prevent from angle over range
-//			if(Dir_Rot==SERVO_CW){for(int i=0;i<4;i++){angle = -1*SteDeg[i];}}
-//			else{for(int i=0;i<4;i++){angle = SteDeg[i];}}
-//			printf("%d: abs %d %d %d\n", osKernelGetTickCount(), speed_angle, pre_angle, angle);
-//			if(pre_angle != angle){
-//				speed_angle=abs(angle-pre_angle);
-//				printf("%d: pre_angle != angle %d %d %d\n", osKernelGetTickCount(), speed_angle, pre_angle, angle);
-//				pre_angle = angle;
-//			}
-//
-//			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,(speed_angle/9));
-//			DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg[0]*100, SERVO_POS,20);
-//			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, -1,50);
-//			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, 2, 150);
-//			//if(Dir_Rot==SERVO_CW)	{pre_angle = -1*pre_angle;}
-//			//else					{pre_angle = pre_angle;}
-//
-//			DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg[1]*100, SERVO_POS,20);
-//			DataSetSteering(buf, STMotorID3, Dir_Rot, SteDeg[2]*100, SERVO_POS,20);
-//			DataSetSteering(buf, STMotorID4, Dir_Rot, SteDeg[3]*100, SERVO_POS,20);
-//		}
+		if		((Tar_cmd_v_x>0) && (Tar_cmd_v_y>0)){/*SteDeg*=1;*/							Dir_Rot=SERVO_CCW; }//the first quadrant
+		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y>0)){Deg2Ste(Xbot_W,180-Deg2Ste(Xbot_R,0)); Dir_Rot=SERVO_CCW; }//the second quadrant
+		else if	((Tar_cmd_v_x<0) && (Tar_cmd_v_y<0)){Deg2Ste(Xbot_W,180+Deg2Ste(Xbot_R,0)); Dir_Rot=SERVO_CW; }//the third quadrant
+		else if	((Tar_cmd_v_x>0) && (Tar_cmd_v_y<0)){Deg2Ste(Xbot_W,abs(Deg2Ste(Xbot_R,0))); Dir_Rot=SERVO_CW; }//the fourth quadrant
+
+		if((SteDeg>=0) && (SteDeg<=90)){//prevent from angle over range
+			if(Dir_Rot==SERVO_CW){for(int i=0;i<4;i++){angle = -1*SteDeg[i];}}
+			else{for(int i=0;i<4;i++){angle = SteDeg[i];}}
+			printf("%d: abs %d %d %d\n", osKernelGetTickCount(), speed_angle, pre_angle, angle);
+			if(pre_angle != angle){
+				speed_angle=abs(angle-pre_angle);
+				printf("%d: pre_angle != angle %d %d %d\n", osKernelGetTickCount(), speed_angle, pre_angle, angle);
+				pre_angle = angle;
+			}
+
+			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, SERVO_POS,(speed_angle/9));
+			DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg[0]*100, SERVO_POS,20);
+			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, -1,50);
+			//DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg*100, 2, 150);
+			//if(Dir_Rot==SERVO_CW)	{pre_angle = -1*pre_angle;}
+			//else					{pre_angle = pre_angle;}
+
+			DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg[1]*100, SERVO_POS,20);
+			DataSetSteering(buf, STMotorID3, Dir_Rot, SteDeg[2]*100, SERVO_POS,20);
+			DataSetSteering(buf, STMotorID4, Dir_Rot, SteDeg[3]*100, SERVO_POS,20);
+		}
+#endif
 		printf("Mode A\n");
 	}
 
@@ -951,10 +949,18 @@ void StartTask03(void *argument)
 //		SteDeg=rad2deg(ANGLE_VEL);
 		//Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL));
 //		printf("%d: abs %d\n", osKernelGetTickCount(), SteDeg);
-		DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg[0]*100, SERVO_POS, 20);
-		DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg[1]*100, SERVO_POS, 20);
-		DataSetSteering(buf, STMotorID3, Dir_Rot^1, SteDeg[2]*100, SERVO_POS, 20);
-		DataSetSteering(buf, STMotorID4, Dir_Rot^1, SteDeg[3]*100, SERVO_POS, 20);
+		for(int i=0;i<4;i++){
+			SAngle[i] = (SteDeg[i]/10)+1;
+		}
+
+//		DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg[0]*100, SERVO_POS, 20);
+//		DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg[1]*100, SERVO_POS, 20);
+//		DataSetSteering(buf, STMotorID3, Dir_Rot^1, SteDeg[2]*100, SERVO_POS, 20);
+//		DataSetSteering(buf, STMotorID4, Dir_Rot^1, SteDeg[3]*100, SERVO_POS, 20);
+		DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg[0]*100, SERVO_POS, SAngle[0]);
+		DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg[1]*100, SERVO_POS, SAngle[1]);
+		DataSetSteering(buf, STMotorID3, Dir_Rot^1, SteDeg[2]*100, SERVO_POS, SAngle[2]);
+		DataSetSteering(buf, STMotorID4, Dir_Rot^1, SteDeg[3]*100, SERVO_POS, SAngle[3]);
 		printf("%d: MM %d\n", osKernelGetTickCount(), SteDeg[0]);
 	}
 
