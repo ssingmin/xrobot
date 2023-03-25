@@ -1,5 +1,7 @@
 #include "servo_motor.h"
 
+uint8_t Steering_Rxbuf[4][12];
+
 char checksum_val = 0;
 int flag_rx = 0;
 int getProximity = 0;
@@ -48,7 +50,9 @@ void ServoMotor_init()
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
-	if (huart->Instance == USART3) {printf("hal_rev irq: %d\n", HAL_UART_Receive_IT(&huart3, tmp_rx, 12));
+	if (huart->Instance == USART3) {
+		printf("hal_rev irq: %d\n", HAL_UART_Receive_IT(&huart3, tmp_rx, 12));
+
 	}//SET INTERRUPT
 	flag_rx = 1;
 	printf("H_URCBf\n");
@@ -140,6 +144,24 @@ void DataSetSteering(const uint8_t* str, uint8_t id, uint8_t direction, unsigned
 
     memcpy(str+(12*id), buf, sizeof(buf));
 
+}
+
+void DataReadSteering(uint8_t id, uint8_t mode)
+{
+	uint8_t buf[6];
+
+	buf[0]=0xFF;//header
+	buf[1]=0xFE;//header
+	buf[2]=id;//id fixed
+	buf[3]=0x02;//length
+	buf[4]=0x00;//checksum
+	buf[5]=mode;
+	for(int i=2;i<6;i++) {checksum_val += buf[i];}//checksum ~(Packet 2 + Packet 3 + Packet 5 + … + Packet N) [1byte]
+	buf[4]=~(checksum_val);//checksum ~(Packet 2 + Packet 3 + Packet 5 + … + Packet N) [1byte]
+	checksum_val=0x00;//checksum
+	Read_flag = 1;//it must be fixed
+	ServoMotor_write(buf);
+	Read_flag = 0;//it must be fixed
 }
 
 uint32_t ServoMotor_read()
@@ -261,3 +283,4 @@ uint32_t ServoMotor_read()
 	//return deg_val;
 
 }
+

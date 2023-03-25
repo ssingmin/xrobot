@@ -38,9 +38,10 @@
 /* USER CODE BEGIN PTD */
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim8;
-#define VERSION_MAJOR 1
-#define VERSION_MINOR 7
+#define VERSION_MAJOR 2
+#define VERSION_MINOR 0
 
+extern uint8_t tmp_rx[12];
 
 MappingPar vel_RxPDO0={{0x60ff,0,0,0},//index //target speed
 						{0x03,0,0,0},//subindex //left and rigt target speed combination
@@ -884,6 +885,7 @@ void StartTask03(void *argument)
 		osDelay(500);
 		}
 
+	HAL_UART_Receive_IT(&huart3, tmp_rx , SERVO_RXBUFLEN);
 	Dir_Rot = 0;//init
 	lastTime = osKernelGetTickCount();
   /* Infinite loop */
@@ -989,7 +991,8 @@ void StartTask03(void *argument)
 		printf("Mode D\n");
 	}
 	//osDelay(10);
-	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
+	//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
+	DataReadSteering(STMotorID1, 0xA1);
 	//printf("uxHighWaterMark: %d\n", uxTaskGetStackHighWaterMark( NULL ));//check #define INCLUDE_uxTaskGetStackHighWaterMark 1
   }
   /* USER CODE END StartTask03 */

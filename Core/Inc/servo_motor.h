@@ -10,6 +10,7 @@
 #define SERVO_CCW	1
 
 #define SERVO_BUFLEN  11  //max length of nurirobot protocol
+#define SERVO_RXBUFLEN  12  //max length of nurirobot protocol
 
 #define SERVO_ORIGIN_VAL 1050 // 0->open, 2000->close, resolution 0.01 degree
 #define SERVO_OPEN  1,9000-SERVO_ORIGIN_VAL,0  //direction= ccw, position 90 degree, normal
