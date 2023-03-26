@@ -185,6 +185,13 @@ const osThreadAttr_t IRQ_PSx_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityRealtime7,
 };
+/* Definitions for steeringtask */
+osThreadId_t steeringtaskHandle;
+const osThreadAttr_t steeringtask_attributes = {
+  .name = "steeringtask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal1,
+};
 /* Definitions for VelStopTimer */
 osTimerId_t VelStopTimerHandle;
 const osTimerAttr_t VelStopTimer_attributes = {
@@ -312,7 +319,7 @@ int32_t Stopflagcheck(uint8_t RW, uint8_t value)
 int16_t Deg2Ste(uint8_t RW, int16_t deg, uint8_t num)
 {
 	if(num>4){
-		printf("%d:osError\n", osKernelGetTickCount());
+		//printf("%d:osError\n", osKernelGetTickCount());
 		return 0;}
 	if(osMutexWait(DegmsgHandle, osWaitForever)==osOK)
 	{
@@ -327,7 +334,7 @@ int16_t Deg2Ste(uint8_t RW, int16_t deg, uint8_t num)
 		}
 	}
 	else{
-		printf("%d:osError\n", osKernelGetTickCount());
+		//printf("%d:osError\n", osKernelGetTickCount());
 		return 0;
 	}
 }
@@ -377,6 +384,7 @@ void StartTask03(void *argument);
 void StartTask04(void *argument);
 void StartTask05(void *argument);
 void StartTask06(void *argument);
+void StartTask07(void *argument);
 void VelStopTimerCallback(void *argument);
 void EndModeDTimerCallback(void *argument);
 void SendCanTimerCallback(void *argument);
@@ -452,6 +460,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of IRQ_PSx */
   IRQ_PSxHandle = osThreadNew(StartTask06, NULL, &IRQ_PSx_attributes);
+
+  /* creation of steeringtask */
+  steeringtaskHandle = osThreadNew(StartTask07, NULL, &steeringtask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -559,7 +570,7 @@ void StartTask02(void *argument)
 			for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[FLAG_RxCplt][i];}
 		//	printf("canbuf: %d %d %d %d %d %d %d %d\n", canbuf[0], canbuf[1], canbuf[2], canbuf[3], canbuf[4], canbuf[5], canbuf[6], canbuf[7]);
 			//printf("%dcanid: %d %d %d\n", osKernelGetTickCount(), g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].Timestamp);
-			if(g_tCan_Rx_Header[FLAG_RxCplt].StdId>g_tCan_Rx_Header[FLAG_RxCplt].ExtId){CanId = g_tCan_Rx_Header[FLAG_RxCplt].StdId;}//�?????????????체크
+			if(g_tCan_Rx_Header[FLAG_RxCplt].StdId>g_tCan_Rx_Header[FLAG_RxCplt].ExtId){CanId = g_tCan_Rx_Header[FLAG_RxCplt].StdId;}//�??????????????체크
 			else {CanId = g_tCan_Rx_Header[FLAG_RxCplt].ExtId;}
 
 			switch(CanId)//parse
@@ -885,7 +896,7 @@ void StartTask03(void *argument)
 		osDelay(500);
 		}
 
-	HAL_UART_Receive_IT(&huart3, tmp_rx , SERVO_RXBUFLEN);
+
 	Dir_Rot = 0;//init
 	lastTime = osKernelGetTickCount();
   /* Infinite loop */
@@ -992,7 +1003,7 @@ void StartTask03(void *argument)
 	}
 	//osDelay(10);
 	//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
-	DataReadSteering(STMotorID1, 0xA1);
+	//DataReadSteering(STMotorID1, 0xA1);
 	//printf("uxHighWaterMark: %d\n", uxTaskGetStackHighWaterMark( NULL ));//check #define INCLUDE_uxTaskGetStackHighWaterMark 1
   }
   /* USER CODE END StartTask03 */
@@ -1132,6 +1143,37 @@ void StartTask06(void *argument)
 	}
   }
   /* USER CODE END StartTask06 */
+}
+
+/* USER CODE BEGIN Header_StartTask07 */
+/**
+* @brief Function implementing the steeringtask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask07 */
+void StartTask07(void *argument)
+{
+  /* USER CODE BEGIN StartTask07 */
+	osDelay(25000);//for initializing steering motor
+	HAL_UART_Receive_IT(&huart3, tmp_rx , SERVO_RXBUFLEN);
+
+	uint32_t lastTime = osKernelGetTickCount();
+
+  /* Infinite loop */
+  for(;;)
+  {
+	lastTime += PERIOD_STEERING;
+	osDelayUntil(lastTime);
+	printf("%d: t07\n", osKernelGetTickCount());
+
+	DataReadSteering(STMotorID1, 0xA1);
+//	for(int i=0;i<12;i++){printf("%02d ", tmp_rx[i]);}
+//	printf("\n");
+
+
+  }
+  /* USER CODE END StartTask07 */
 }
 
 /* VelStopTimerCallback function */

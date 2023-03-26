@@ -51,11 +51,14 @@ void ServoMotor_init()
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
 	if (huart->Instance == USART3) {
-		printf("hal_rev irq: %d\n", HAL_UART_Receive_IT(&huart3, tmp_rx, 12));
+		//printf("hal_rev irq: %d\n", HAL_UART_Receive_IT(&huart3, tmp_rx, 12));
+		HAL_UART_Receive_IT(&huart3, tmp_rx, 12);
 
 	}//SET INTERRUPT
 	flag_rx = 1;
-	printf("H_URCBf\n");
+	printf("H_URCBf: \n");
+	for(int i=0;i<12;i++){printf("%02x ", tmp_rx[i]);}
+	printf("\n");
 }
 
 void ServoMotor_write(const uint8_t* str)
