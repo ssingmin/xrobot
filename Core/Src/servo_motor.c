@@ -1,11 +1,12 @@
 #include "servo_motor.h"
 
 uint8_t Steering_Rxbuf[4][12];
-
+int rx_i = 0;
 char checksum_val = 0;
 int flag_rx = 0;
 int getProximity = 0;
-uint8_t tmp_rx[12]={0,};
+//uint8_t tmp_rx[4]={0,};
+uint8_t tmp_rx[4][20] = {0};
 int Read_flag = 0;
 
 extern uint8_t touch_data;
@@ -52,13 +53,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
 	if (huart->Instance == USART3) {
 		//printf("hal_rev irq: %d\n", HAL_UART_Receive_IT(&huart3, tmp_rx, 12));
-		HAL_UART_Receive_IT(&huart3, tmp_rx, 12);
-
+		HAL_UART_Receive_IT(&huart3, tmp_rx[++rx_i], 12);
+		rx_i%=4;
 	}//SET INTERRUPT
 	flag_rx = 1;
 	printf("H_URCBf: \n");
-	for(int i=0;i<12;i++){printf("%02x ", tmp_rx[i]);}
-	printf("\n");
+//	for(int i=0;i<12;i++){printf("%02x ", tmp_rx[i]);}
+//	printf("\n");
 }
 
 void ServoMotor_write(const uint8_t* str)
@@ -266,7 +267,7 @@ uint32_t ServoMotor_read()
 					printf("checksum error buf[4] %02X == %02X checksum_tmp \n", buf[4], checksum_tmp);
 
 					for(int i=0;i<SERVO_BUFLEN;i++) {buf[i]=0;}//buf init
-					for(int i=0;i<12;i++) {tmp_rx[i]=0;}//tmp_rx init
+					//for(int i=0;i<12;i++) {tmp_rx[i]=0;}//tmp_rx init
 					return 0xfe;    //interrupt error
 				}
 
@@ -278,7 +279,7 @@ uint32_t ServoMotor_read()
 	//else {return 0xff;}
 
 	for(int i=0;i<SERVO_BUFLEN;i++) {buf[i]=0;}//buf init
-	for(int i=0;i<12;i++) {tmp_rx[i]=0;}//tmp_rx init
+	//for(int i=0;i<12;i++) {tmp_rx[i]=0;}//tmp_rx init
 
     return cur_val;
     //return deg_val;

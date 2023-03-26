@@ -41,7 +41,8 @@ extern TIM_HandleTypeDef htim8;
 #define VERSION_MAJOR 2
 #define VERSION_MINOR 0
 
-extern uint8_t tmp_rx[12];
+extern uint8_t tmp_rx[4][20];
+extern int flag_rx;
 
 MappingPar vel_RxPDO0={{0x60ff,0,0,0},//index //target speed
 						{0x03,0,0,0},//subindex //left and rigt target speed combination
@@ -898,6 +899,8 @@ void StartTask03(void *argument)
 
 
 	Dir_Rot = 0;//init
+
+	HAL_UART_Receive_IT(&huart3, tmp_rx[0] , 12);
 	lastTime = osKernelGetTickCount();
   /* Infinite loop */
   for(;;)
@@ -1003,7 +1006,12 @@ void StartTask03(void *argument)
 	}
 	//osDelay(10);
 	//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
-	//DataReadSteering(STMotorID1, 0xA1);
+
+//	DataReadSteering(STMotorID1, 0xA1);//osDelay(3);
+//	DataReadSteering(STMotorID2, 0xA1);osDelay(3);
+//	DataReadSteering(STMotorID3, 0xA1);osDelay(3);
+//	DataReadSteering(STMotorID4, 0xA1);osDelay(3);
+
 	//printf("uxHighWaterMark: %d\n", uxTaskGetStackHighWaterMark( NULL ));//check #define INCLUDE_uxTaskGetStackHighWaterMark 1
   }
   /* USER CODE END StartTask03 */
@@ -1155,8 +1163,10 @@ void StartTask06(void *argument)
 void StartTask07(void *argument)
 {
   /* USER CODE BEGIN StartTask07 */
+	uint8_t testarr[4][12];
+
 	osDelay(25000);//for initializing steering motor
-	HAL_UART_Receive_IT(&huart3, tmp_rx , SERVO_RXBUFLEN);
+//	HAL_UART_Receive_IT(&huart3, tmp_rx , SERVO_RXBUFLEN);
 
 	uint32_t lastTime = osKernelGetTickCount();
 
@@ -1165,11 +1175,21 @@ void StartTask07(void *argument)
   {
 	lastTime += PERIOD_STEERING;
 	osDelayUntil(lastTime);
-	printf("%d: t07\n", osKernelGetTickCount());
 
-	DataReadSteering(STMotorID1, 0xA1);
-//	for(int i=0;i<12;i++){printf("%02d ", tmp_rx[i]);}
-//	printf("\n");
+//	DataReadSteering(STMotorID1, 0xA1);osDelay(3);
+
+	printf("%d: t07\n", osKernelGetTickCount());
+	if(flag_rx == 1){
+		for(int i=0;i<20;i++){printf("%02x ", tmp_rx[0][i]);}
+		printf("\n");
+		for(int i=0;i<20;i++){printf("%02x ", tmp_rx[1][i]);}
+		printf("\n");
+		for(int i=0;i<20;i++){printf("%02x ", tmp_rx[2][i]);}
+		printf("\n");
+		for(int i=0;i<20;i++){printf("%02x ", tmp_rx[3][i]);}
+		printf("\n");
+
+	}
 
 
   }
