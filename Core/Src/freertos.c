@@ -41,7 +41,7 @@ extern TIM_HandleTypeDef htim8;
 #define VERSION_MAJOR 2
 #define VERSION_MINOR 0
 
-extern uint8_t tmp_rx[4][20];
+extern uint8_t tmp_rx[4][SERVO_RXBUFLEN];
 extern int flag_rx;
 
 MappingPar vel_RxPDO0={{0x60ff,0,0,0},//index //target speed
@@ -102,6 +102,9 @@ uint8_t buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front rig
 					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
 					25, 26, 27, 28, 29, 30, 31, 32,	33, 34, 35, 36,		//3 rear right
 					37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48	};	//4 rear left
+int16_t real_angle_c;
+int16_t real_angle_i;
+int16_t real_angle_o;
 
 double angle_rad_c;
 double angle_rad_i;
@@ -967,6 +970,7 @@ void StartTask03(void *argument)
 //		printf("%d: abs %d\n", osKernelGetTickCount(), SteDeg);
 		for(int i=0;i<4;i++){
 			SAngle[i] = (SteDeg[i]/10)+1;
+			SAngle[i] = 20;//temp
 		}
 
 //		DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg[0]*100, SERVO_POS, 20);
@@ -1005,12 +1009,12 @@ void StartTask03(void *argument)
 		printf("Mode D\n");
 	}
 	//osDelay(10);
-	//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
+	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 
-//	DataReadSteering(STMotorID1, 0xA1);//osDelay(3);
-//	DataReadSteering(STMotorID2, 0xA1);osDelay(3);
-//	DataReadSteering(STMotorID3, 0xA1);osDelay(3);
-//	DataReadSteering(STMotorID4, 0xA1);osDelay(3);
+	osDelay(5); DataReadSteering(STMotorID1, 0xA1);
+	osDelay(5); DataReadSteering(STMotorID2, 0xA1);
+	osDelay(5); DataReadSteering(STMotorID3, 0xA1);
+	osDelay(5); DataReadSteering(STMotorID4, 0xA1);
 
 	//printf("uxHighWaterMark: %d\n", uxTaskGetStackHighWaterMark( NULL ));//check #define INCLUDE_uxTaskGetStackHighWaterMark 1
   }
@@ -1163,7 +1167,10 @@ void StartTask06(void *argument)
 void StartTask07(void *argument)
 {
   /* USER CODE BEGIN StartTask07 */
-	uint8_t testarr[4][12];
+	uint8_t testarr[4][12] = {0};
+	uint8_t tempID = 0;
+	uint8_t rx_checksum[4] = {0,};
+	uint16_t real_angle[4] = {0,};
 
 	osDelay(25000);//for initializing steering motor
 //	HAL_UART_Receive_IT(&huart3, tmp_rx , SERVO_RXBUFLEN);
@@ -1176,21 +1183,56 @@ void StartTask07(void *argument)
 	lastTime += PERIOD_STEERING;
 	osDelayUntil(lastTime);
 
-//	DataReadSteering(STMotorID1, 0xA1);osDelay(3);
+	for(int k=0;k<4;k++){//copy data to buffer
+		for(int i=0;i<12;i++){
+			if(tmp_rx[k][i]==0xFF && tmp_rx[k][i+1]==0xFE)//parsing
+			{
+				tempID = tmp_rx[k][i+2];
+				for(int j=0;j<12;j++)
+				{
+					if(i+j<12){testarr[tempID][j]=tmp_rx[k][i+j];}
+					else {testarr[tempID][j]=tmp_rx[k][i+j-12];}
+				}
+			}
+		}
+	}
 
 	printf("%d: t07\n", osKernelGetTickCount());
 	if(flag_rx == 1){
-		for(int i=0;i<20;i++){printf("%02x ", tmp_rx[0][i]);}
-		printf("\n");
-		for(int i=0;i<20;i++){printf("%02x ", tmp_rx[1][i]);}
-		printf("\n");
-		for(int i=0;i<20;i++){printf("%02x ", tmp_rx[2][i]);}
-		printf("\n");
-		for(int i=0;i<20;i++){printf("%02x ", tmp_rx[3][i]);}
-		printf("\n");
+//		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmp_rx[0][i]);}
+//		printf("\n");
+//		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmp_rx[1][i]);}
+//		printf("\n");
+//		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmp_rx[2][i]);}
+//		printf("\n");
+//		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmp_rx[3][i]);}
+//		printf("\n");
+//		printf("\n");
 
+		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", testarr[0][i]);} printf("\n");
+		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", testarr[1][i]);} printf("\n");
+		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", testarr[2][i]);} printf("\n");
+		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", testarr[3][i]);} printf("\n");
+
+		flag_rx = 0;
 	}
 
+	for(int j=0;j<4;j++){
+		rx_checksum[j] = testarr[j][2]+testarr[j][3];//id+length
+
+		for(int i=5;i<testarr[j][3]+4;i++) {
+			printf("count i, rx_checksum: %d, %02X\n", i, rx_checksum[j]);
+			rx_checksum[j] += testarr[j][i];
+		}//checksum ~(Packet 2 + Packet 3 + Packet '5' + … + Packet N) [1byte]
+		rx_checksum[j] ^= 0xff;//invert value. checksum done.
+		//tmp_checksum[0]=~rx_checksum[0];
+		printf("rx_checksum: %x\n", rx_checksum[j]);
+
+		if(testarr[j][4]==rx_checksum[j]){
+			real_angle[j] = testarr[j][7]*0x100+testarr[j][8];
+			printf("%d: angle[%d]: %03d \n", osKernelGetTickCount(), j, real_angle[j]);
+		}
+	}
 
   }
   /* USER CODE END StartTask07 */

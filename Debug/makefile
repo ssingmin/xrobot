@@ -38,34 +38,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := Xrobot
+BUILD_ARTIFACT_NAME := xrobot
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-Xrobot.elf \
+xrobot.elf \
 
 MAP_FILES += \
-Xrobot.map \
+xrobot.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-Xrobot.list \
+xrobot.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: Xrobot.elf secondary-outputs
+main-build: xrobot.elf secondary-outputs
 
 # Tool invocations
-Xrobot.elf Xrobot.map: $(OBJS) $(USER_OBJS) C:\Users\sangmin_lee\STM32CubeIDE\workspace_1.6.1\Xrobot\STM32F405RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Xrobot.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\sangmin_lee\STM32CubeIDE\workspace_1.6.1\Xrobot\STM32F405RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Xrobot.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+xrobot.elf xrobot.map: $(OBJS) $(USER_OBJS) C:\Users\ssingmin\STM32CubeIDE\workspace_1.12.0\xrobot\STM32F405RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "xrobot.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\ssingmin\STM32CubeIDE\workspace_1.12.0\xrobot\STM32F405RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="xrobot.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -74,14 +74,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-Xrobot.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Xrobot.list"
+xrobot.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "xrobot.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) Xrobot.elf Xrobot.list Xrobot.map default.size.stdout
+	-$(RM) default.size.stdout xrobot.elf xrobot.list xrobot.map
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

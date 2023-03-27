@@ -1,0 +1,3 @@
+gpio.c:42:6:MX_GPIO_Init	1
+gpio.c:118:6:GPIO_disableirq	1
+gpio.c:124:6:GPIO_enableirq	1

@@ -1,0 +1,15 @@
+can.c:38:6:MX_CAN1_Init	2
+can.c:70:6:HAL_CAN_MspInit	2
+can.c:103:6:HAL_CAN_MspDeInit	2
+can.c:130:6:CAN_disableirq	1
+can.c:131:6:CAN_enableirq	1
+can.c:133:6:CanInit	4
+can.c:174:6:CanInit2	4
+can.c:211:6:sendCan	4
+can.c:237:6:SDOMsg	5
+can.c:259:6:NMT_Mode	2
+can.c:272:5:PDOMapping	8
+can.c:305:6:PDOMsg	1
+can.c:310:6:Vel_PDOMsg	1
+can.c:323:6:Tor_OnOff	4
+can.c:336:6:HAL_CAN_RxFifo0MsgPendingCallback	4
