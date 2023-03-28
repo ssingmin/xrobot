@@ -56,22 +56,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 			rx_i=-1;
 			flag_rx = 1;
 		}
-//		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02X ", tmp_rx[0][i]);}
-//		printf("\n");
-//		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02X ", tmp_rx[1][i]);}
-//		printf("\n");
-//		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02X ", tmp_rx[2][i]);}
-//		printf("\n");
-//		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02X ", tmp_rx[3][i]);}
-//		printf("\n");
-		//printf("hal_rev irq: %d\n", HAL_UART_Receive_IT(&huart3, tmp_rx, 12));
-		printf("H_URCBf: %d \n", rx_i);
 		HAL_UART_Receive_IT(&huart3, tmp_rx[++rx_i], 12);
 
 	}//SET INTERRUPT
-	//printf("H_URCBf: \n");
-//	for(int i=0;i<12;i++){printf("%02x ", tmp_rx[i]);}
-//	printf("\n");
 }
 
 void ServoMotor_write(const uint8_t* str)

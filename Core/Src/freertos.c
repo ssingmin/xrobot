@@ -102,9 +102,10 @@ uint8_t buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front rig
 					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
 					25, 26, 27, 28, 29, 30, 31, 32,	33, 34, 35, 36,		//3 rear right
 					37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48	};	//4 rear left
-int16_t real_angle_c;
-int16_t real_angle_i;
-int16_t real_angle_o;
+
+double real_angle_c;
+double real_angle_i;
+double real_angle_o;
 
 double angle_rad_c;
 double angle_rad_i;
@@ -249,34 +250,33 @@ void Cal_Real_cmd(void)
 	double tempR;
 
 	tempL=(double)(Tmp_cmd_FL+Tmp_cmd_RL)/(2*10);
-	tempR=-(double)(Tmp_cmd_FR+Tmp_cmd_RR)/(2*10);
-//	Real_cmd_v_x = C_2PIRxINv60*(((double)(Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR))/4)/10*fabs(cos(ANGLE_RAD_A));
-//	Real_cmd_v_y = C_2PIRxINv60*(((double)(Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR))/4)/10*fabs(sin(ANGLE_RAD_A));
+	tempR=-(double)(Tmp_cmd_FR+Tmp_cmd_RR)/(2*10);	if(angle_rad_c == 0){
 
-//	Real_cmd_v_x = (C_2PIRxINv60/2)*((sin(angle_rad_i)*tempL/2)+(sin(angle_rad_o)*tempR/2))/sin(angle_rad_c);
-	if(angle_rad_c == 0){
-//		Real_cmd_v_x = C_2PIRxINv60*(((double)(Tmp_cmd_FL+Tmp_cmd_RL-Tmp_cmd_FR-Tmp_cmd_RR))/4)*fabs(cos(ANGLE_RAD_A));
-		Real_cmd_v_x = C_2PIRxINv60*((tempL+tempR)/2)*fabs(cos(ANGLE_RAD_A));
+	Real_cmd_v_x = C_2PIRxINv60*((tempL+tempR)/2)*fabs(cos(ANGLE_RAD_A));
+
+//	double real_angle_c;
+//	double real_angle_i;
+//	double real_angle_o;
 	}
 	else{
 		if((tempL<tempR)  &&  ((tempL>0) && (tempR>0))){
-			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(angle_rad_i)/sin(angle_rad_c))*tempL)
-				+((sin(angle_rad_o)/sin(angle_rad_c))*tempR));
+			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(real_angle_i)/sin(real_angle_c))*tempL)
+				+((sin(real_angle_o)/sin(real_angle_c))*tempR));
 		}
 
 		else if((tempL>tempR)  &&  ((tempL>0) && (tempR>0))){
-			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(angle_rad_i)/sin(angle_rad_c))*tempR)
-				+((sin(angle_rad_o)/sin(angle_rad_c))*tempL));
+			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(real_angle_i)/sin(real_angle_c))*tempR)
+				+((sin(real_angle_o)/sin(real_angle_c))*tempL));
 		}
 
 		else if((tempL<tempR)  &&  ((tempL<0) && (tempR<0))){
-			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(angle_rad_i)/sin(angle_rad_c))*tempR)
-				+((sin(angle_rad_o)/sin(angle_rad_c))*tempL));
+			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(real_angle_i)/sin(real_angle_c))*tempR)
+				+((sin(real_angle_o)/sin(real_angle_c))*tempL));
 		}
 
 		else if((tempL>tempR)  &&  ((tempL<0) && (tempR<0))){
-			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(angle_rad_i)/sin(angle_rad_c))*tempL)
-				+((sin(angle_rad_o)/sin(angle_rad_c))*tempR));
+			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(real_angle_i)/sin(real_angle_c))*tempL)
+				+((sin(real_angle_o)/sin(real_angle_c))*tempR));
 		}
 	}
 
@@ -287,10 +287,10 @@ void Cal_Real_cmd(void)
 	else//mode B
 	{
 //		Real_cmd_w = (C_4PIRxINv60WB*((tempL+tempR)/2)*fabs(sin(angle_rad_c)))*1000;
-		if		((tempL<tempR)  &&  ((tempL>0) && (tempR>0))){Real_cmd_w = ((Real_cmd_v_x*sin(angle_rad_c))/230)*1000;}
-		else if	((tempL>tempR)  &&  ((tempL>0) && (tempR>0))){Real_cmd_w = -((Real_cmd_v_x*sin(angle_rad_c))/230)*1000;}
-		else if	((tempL<tempR)  &&  ((tempL<0) && (tempR<0))){Real_cmd_w = -((Real_cmd_v_x*sin(angle_rad_c))/230)*1000;}
-		else if	((tempL>tempR)  &&  ((tempL<0) && (tempR<0))){Real_cmd_w = ((Real_cmd_v_x*sin(angle_rad_c))/230)*1000;}
+		if		((tempL<tempR)  &&  ((tempL>0) && (tempR>0))){Real_cmd_w = ((Real_cmd_v_x*sin(real_angle_c))/230)*1000;}
+		else if	((tempL>tempR)  &&  ((tempL>0) && (tempR>0))){Real_cmd_w = -((Real_cmd_v_x*sin(real_angle_c))/230)*1000;}
+		else if	((tempL<tempR)  &&  ((tempL<0) && (tempR<0))){Real_cmd_w = -((Real_cmd_v_x*sin(real_angle_c))/230)*1000;}
+		else if	((tempL>tempR)  &&  ((tempL<0) && (tempR<0))){Real_cmd_w = ((Real_cmd_v_x*sin(real_angle_c))/230)*1000;}
 
 	}
 
@@ -346,6 +346,11 @@ int16_t Deg2Ste(uint8_t RW, int16_t deg, uint8_t num)
 int16_t rad2deg(double radian)
 {
     return (int16_t)(radian*180/MATH_PI);
+}
+
+double deg2rad(int16_t degree)
+{
+    return (double)(degree*MATH_PI/180);
 }
 
 void ModeSelect(void){
@@ -1167,7 +1172,7 @@ void StartTask06(void *argument)
 void StartTask07(void *argument)
 {
   /* USER CODE BEGIN StartTask07 */
-	uint8_t testarr[4][12] = {0};
+	uint8_t tmparr[4][12] = {0};
 	uint8_t tempID = 0;
 	uint8_t rx_checksum[4] = {0,};
 	uint16_t real_angle[4] = {0,};
@@ -1190,8 +1195,8 @@ void StartTask07(void *argument)
 				tempID = tmp_rx[k][i+2];
 				for(int j=0;j<12;j++)
 				{
-					if(i+j<12){testarr[tempID][j]=tmp_rx[k][i+j];}
-					else {testarr[tempID][j]=tmp_rx[k][i+j-12];}
+					if(i+j<12){tmparr[tempID][j]=tmp_rx[k][i+j];}
+					else {tmparr[tempID][j]=tmp_rx[k][i+j-12];}
 				}
 			}
 		}
@@ -1199,40 +1204,46 @@ void StartTask07(void *argument)
 
 	printf("%d: t07\n", osKernelGetTickCount());
 	if(flag_rx == 1){
-//		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmp_rx[0][i]);}
-//		printf("\n");
-//		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmp_rx[1][i]);}
-//		printf("\n");
-//		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmp_rx[2][i]);}
-//		printf("\n");
-//		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmp_rx[3][i]);}
-//		printf("\n");
-//		printf("\n");
 
-		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", testarr[0][i]);} printf("\n");
-		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", testarr[1][i]);} printf("\n");
-		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", testarr[2][i]);} printf("\n");
-		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", testarr[3][i]);} printf("\n");
+		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmparr[0][i]);} printf("\n");
+		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmparr[1][i]);} printf("\n");
+		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmparr[2][i]);} printf("\n");
+		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmparr[3][i]);} printf("\n");
 
 		flag_rx = 0;
 	}
 
 	for(int j=0;j<4;j++){
-		rx_checksum[j] = testarr[j][2]+testarr[j][3];//id+length
+		rx_checksum[j] = tmparr[j][2]+tmparr[j][3];//id+length
 
-		for(int i=5;i<testarr[j][3]+4;i++) {
-			printf("count i, rx_checksum: %d, %02X\n", i, rx_checksum[j]);
-			rx_checksum[j] += testarr[j][i];
+		for(int i=5;i<tmparr[j][3]+4;i++) {
+			rx_checksum[j] += tmparr[j][i];
 		}//checksum ~(Packet 2 + Packet 3 + Packet '5' + … + Packet N) [1byte]
 		rx_checksum[j] ^= 0xff;//invert value. checksum done.
-		//tmp_checksum[0]=~rx_checksum[0];
-		printf("rx_checksum: %x\n", rx_checksum[j]);
 
-		if(testarr[j][4]==rx_checksum[j]){
-			real_angle[j] = testarr[j][7]*0x100+testarr[j][8];
+
+		if(tmparr[j][4]==rx_checksum[j]){
+			real_angle[j] = tmparr[j][7]*0x100+tmparr[j][8];
 			printf("%d: angle[%d]: %03d \n", osKernelGetTickCount(), j, real_angle[j]);
 		}
 	}
+
+
+	if(real_angle[0]>real_angle[1]){
+		real_angle_i = deg2rad((double)((round((double)(real_angle[0])/100) + round((double)(real_angle[2])/100)) /2));//unit 0.01
+		real_angle_o = deg2rad((double)((round((double)(real_angle[1])/100) + round((double)(real_angle[3])/100)) /2));//unit 0.01
+	}
+
+	else{
+		real_angle_i = deg2rad((double)((round((double)(real_angle[1])/100) + round((double)(real_angle[3])/100)) /2));//unit 0.01
+		real_angle_o = deg2rad((double)((round((double)(real_angle[0])/100) + round((double)(real_angle[2])/100)) /2));//unit 0.01
+	}
+
+	real_angle_c = (atan2(230*tan(real_angle_i),230+(209.5*tan(real_angle_i)))
+				+ atan2(230*tan(real_angle_o),230-(209.5*tan(real_angle_o))))/2;
+
+	printf("%d: angle %f %f %f %f %f\n", osKernelGetTickCount(), atan2(230*tan(real_angle_i),230+(209.5*tan(real_angle_i))),
+			atan2(230*tan(real_angle_o),230-(209.5*tan(real_angle_o))), real_angle_c, real_angle_i, real_angle_o);
 
   }
   /* USER CODE END StartTask07 */
