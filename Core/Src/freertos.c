@@ -39,7 +39,12 @@
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim8;
 #define VERSION_MAJOR 2
-#define VERSION_MINOR 0
+#define VERSION_MINOR 1
+
+#define TAR_RPM	5
+#define MS_PER_DEG	(1000/(6*TAR_RPM))
+//#define MS_PER_DEG	11.11
+#define RES_SM	100	//SM= STEERING MOTOR
 
 extern uint8_t tmp_rx[4][SERVO_RXBUFLEN];
 extern int flag_rx;
@@ -88,6 +93,7 @@ int8_t candbg[8]={0,};
 uint8_t PS_SIGx_Pin = 0;	//0000 4321
 
 int16_t SteDeg[4] = {0,};	//steering degree unit=0.01 degree
+
 uint8_t ModeABCD = 4;//4 is stop mode
 //uint8_t ModeABCD = 1;//4 is stop mode
 uint8_t Pre_ModeABCD = 0;
@@ -822,10 +828,16 @@ void StartTask03(void *argument)
 	uint32_t lastTime;
 	uint8_t Dir_Rot = 0; //direction of rotation
 	uint8_t FT_flag = 0; //FineTuning_flag
+	uint8_t send_flag = 0; //FineTuning_flag
+	uint8_t set_flag = 0; //FineTuning_flag
 
 	int32_t angle = 0;
 	int32_t pre_angle = 0;
 	int32_t speed_angle = 0;
+
+	int16_t pre_SteDeg[4] = {0,};	//steering degree unit=0.01 degree
+	int16_t start_SteDeg[4] = {0,};
+	int16_t end_SteDeg[4] = {0,};
 	int32_t SAngle[4] = {0,};
 //	char buf[48]={	 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12,		//1 front right
 //					13, 14, 15, 16, 17, 18, 19, 20, 21, 22,	23, 24,		//2 front left
@@ -971,11 +983,29 @@ void StartTask03(void *argument)
 			if(SteDeg[i]>90){Deg2Ste(Xbot_W, 90, i);}//prevent over angle
 		}
 //		SteDeg=rad2deg(ANGLE_VEL);
-		//Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL));
+//		Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL));
 //		printf("%d: abs %d\n", osKernelGetTickCount(), SteDeg);
-		for(int i=0;i<4;i++){
-			SAngle[i] = (SteDeg[i]/10)+1;
-			SAngle[i] = 20;//temp
+
+
+		if(pre_SteDeg[0] == SteDeg[0]){
+			set_flag = 1;
+			for(int i=0;i<4;i++){
+				end_SteDeg[i] = ((SteDeg[i]*MS_PER_DEG)+5) / RES_SM;//+5 is round
+				if(start_SteDeg[i]>end_SteDeg[i]) {SAngle[i] = start_SteDeg[i] - end_SteDeg[i];}
+				else if (start_SteDeg[i]<end_SteDeg[i]) {SAngle[i] = end_SteDeg[i] - start_SteDeg[i];}
+				start_SteDeg[i] = SAngle[i];
+				printf("%d: input data %d, %d, %d, %d\n", osKernelGetTickCount(),
+						SteDeg[i], SAngle[i], end_SteDeg[i] , start_SteDeg[i] );
+			}
+		}
+
+		else{
+			for(int i=0;i<4;i++){
+				pre_SteDeg[i] = SteDeg[i];
+				send_flag = 1;
+				printf("%d: change data %d, %d, %d, %d\n", osKernelGetTickCount(),
+						SteDeg[i], SAngle[i], end_SteDeg[i] , start_SteDeg[i] );
+			}
 		}
 
 //		DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg[0]*100, SERVO_POS, 20);
@@ -992,11 +1022,17 @@ void StartTask03(void *argument)
 	if(ModeABCD == 3){
 //		SteDeg=rad2deg(ANGLE_VEL);
 		for(int i=0;i<4;i++){Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL), i);}
+		send_flag = 1;
+		set_flag = 1;
+		pre_SteDeg[0] = 1; //for set send_flag of mode B
 		//printf("%d: abs %d\n", osKernelGetTickCount(), SteDeg);
 		DataSetSteering(buf, STMotorID1, SERVO_CCW, SteDeg[0]*100, SERVO_POS, 20);
 		DataSetSteering(buf, STMotorID2, SERVO_CW, SteDeg[1]*100, SERVO_POS, 20);
 		DataSetSteering(buf, STMotorID3, SERVO_CW, SteDeg[2]*100, SERVO_POS, 20);
 		DataSetSteering(buf, STMotorID4, SERVO_CCW, SteDeg[3]*100, SERVO_POS, 20);
+		for(int i=0;i<4;i++){
+			SAngle[i] = ((SteDeg[i]*MS_PER_DEG)+5) / RES_SM;
+		}
 		printf("Mode c\n");
 	}
 
@@ -1014,8 +1050,25 @@ void StartTask03(void *argument)
 		printf("Mode D\n");
 	}
 	//osDelay(10);
-	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
+#if 1//testing
+	if((send_flag==1) && (set_flag==1)){
+		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
+		send_flag = 0;
+		set_flag = 0;
+		for(int i=0;i<4;i++){
+			printf("[%d] %d ", i, SAngle[i]);
+			start_SteDeg[i] = 0;
+			end_SteDeg[i] = 0;
+//			SAngle[i] = 0;
+		}
 
+		printf("%d: writeDMA\n", osKernelGetTickCount());
+	}
+
+#elif
+	//origin
+	//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
+#endif
 	osDelay(5); DataReadSteering(STMotorID1, 0xA1);
 	osDelay(5); DataReadSteering(STMotorID2, 0xA1);
 	osDelay(5); DataReadSteering(STMotorID3, 0xA1);
