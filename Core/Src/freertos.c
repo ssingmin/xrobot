@@ -986,7 +986,7 @@ void StartTask03(void *argument)
 //		Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL));
 //		printf("%d: abs %d\n", osKernelGetTickCount(), SteDeg);
 
-#if 0
+
 		if(pre_SteDeg[0] == SteDeg[0]){
 			set_flag = 1;
 			for(int i=0;i<4;i++){
@@ -1007,23 +1007,15 @@ void StartTask03(void *argument)
 						SteDeg[i], SAngle[i], end_SteDeg[i] , start_SteDeg[i] );
 			}
 		}
-#endif
-		for(int i=0;i<4;i++){
-			SAngle[i] = ((SteDeg[i]*MS_PER_DEG)+5) / RES_SM;//+5 is round
-			printf("%d: change data %d, %d\n", osKernelGetTickCount(),
-									SteDeg[i], SAngle[i] );
-		}
-#if 0
-		DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg[0]*100, SERVO_POS, 20);
-		DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg[1]*100, SERVO_POS, 20);
-		DataSetSteering(buf, STMotorID3, Dir_Rot^1, SteDeg[2]*100, SERVO_POS, 20);
-		DataSetSteering(buf, STMotorID4, Dir_Rot^1, SteDeg[3]*100, SERVO_POS, 20);
-#else
+
+//		DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg[0]*100, SERVO_POS, 20);
+//		DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg[1]*100, SERVO_POS, 20);
+//		DataSetSteering(buf, STMotorID3, Dir_Rot^1, SteDeg[2]*100, SERVO_POS, 20);
+//		DataSetSteering(buf, STMotorID4, Dir_Rot^1, SteDeg[3]*100, SERVO_POS, 20);
 		DataSetSteering(buf, STMotorID1, Dir_Rot, SteDeg[0]*100, SERVO_POS, SAngle[0]);
 		DataSetSteering(buf, STMotorID2, Dir_Rot, SteDeg[1]*100, SERVO_POS, SAngle[1]);
 		DataSetSteering(buf, STMotorID3, Dir_Rot^1, SteDeg[2]*100, SERVO_POS, SAngle[2]);
 		DataSetSteering(buf, STMotorID4, Dir_Rot^1, SteDeg[3]*100, SERVO_POS, SAngle[3]);
-#endif
 		printf("%d: MM %d\n", osKernelGetTickCount(), SteDeg[0]);
 	}
 
@@ -1058,7 +1050,7 @@ void StartTask03(void *argument)
 		printf("Mode D\n");
 	}
 	//osDelay(10);
-#if 0//testing
+#if 1//testing
 	if((send_flag==1) && (set_flag==1)){
 		ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 		send_flag = 0;
@@ -1073,9 +1065,9 @@ void StartTask03(void *argument)
 		printf("%d: writeDMA\n", osKernelGetTickCount());
 	}
 
-#else
+#elif
 	//origin
-	ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
+	//ServoMotor_writeDMA(buf);//use osdelay(6)*2ea
 #endif
 	osDelay(5); DataReadSteering(STMotorID1, 0xA1);
 	osDelay(5); DataReadSteering(STMotorID2, 0xA1);
