@@ -39,7 +39,7 @@
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim8;
 #define VERSION_MAJOR 2
-#define VERSION_MINOR 1
+#define VERSION_MINOR 3
 
 #define TAR_RPM	5
 #define MS_PER_DEG	(1000/(6*TAR_RPM))
@@ -256,9 +256,13 @@ void Cal_Real_cmd(void)
 	double tempR;
 
 	tempL=(double)(Tmp_cmd_FL+Tmp_cmd_RL)/(2*10);
-	tempR=-(double)(Tmp_cmd_FR+Tmp_cmd_RR)/(2*10);	if(angle_rad_c == 0){
+	tempR=-(double)(Tmp_cmd_FR+Tmp_cmd_RR)/(2*10);
 
+	if(angle_rad_c == 0){
+
+	//Real_cmd_v_x = C_2PIRxINv60*((tempL+tempR)/2)*fabs(cos(ANGLE_RAD_A));
 	Real_cmd_v_x = C_2PIRxINv60*((tempL+tempR)/2)*fabs(cos(ANGLE_RAD_A));
+	printf("%d:Real_cmd_v_x 11 %f %f %f %f\n", osKernelGetTickCount(), Real_cmd_v_x, tempL, tempL, cos(ANGLE_RAD_A));
 
 //	double real_angle_c;
 //	double real_angle_i;
@@ -266,23 +270,53 @@ void Cal_Real_cmd(void)
 	}
 	else{
 		if((tempL<tempR)  &&  ((tempL>0) && (tempR>0))){
-			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(real_angle_i)/sin(real_angle_c))*tempL)
-				+((sin(real_angle_o)/sin(real_angle_c))*tempR));
+			if((sin(real_angle_c)<0.1) && (sin(real_angle_c)>-0.1))
+			{
+				Real_cmd_v_x = C_2PIRxINv60*((tempL+tempR)/2)*fabs(cos(ANGLE_RAD_A));
+				printf("%d:Real_cmd_v_x 221 %f %f %f %f %f\n", osKernelGetTickCount(), Real_cmd_v_x, tempL, tempL, sin(real_angle_i), sin(real_angle_c));
+			}
+			else{
+				Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(real_angle_i)/sin(real_angle_c))*tempL)
+								+((sin(real_angle_o)/sin(real_angle_c))*tempR));
+				printf("%d:Real_cmd_v_x 222 %f %f %f %f %f\n", osKernelGetTickCount(), Real_cmd_v_x, tempL, tempL, sin(real_angle_i), sin(real_angle_c));
+			}
+
 		}
 
 		else if((tempL>tempR)  &&  ((tempL>0) && (tempR>0))){
+			if((sin(real_angle_c)<0.1) && (sin(real_angle_c)>-0.1)){
+				Real_cmd_v_x = C_2PIRxINv60*((tempL+tempR)/2)*fabs(cos(ANGLE_RAD_A));
+								printf("%d:Real_cmd_v_x 331 %f %f %f %f %f\n", osKernelGetTickCount(), Real_cmd_v_x, tempL, tempL, sin(real_angle_i), sin(real_angle_c));
+			}
+			else{
 			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(real_angle_i)/sin(real_angle_c))*tempR)
-				+((sin(real_angle_o)/sin(real_angle_c))*tempL));
+							+((sin(real_angle_o)/sin(real_angle_c))*tempL));
+			printf("%d:Real_cmd_v_x 332 %f %f %f %f %f\n", osKernelGetTickCount(), Real_cmd_v_x, tempL, tempL, sin(real_angle_i), sin(real_angle_c));
+			}
 		}
 
 		else if((tempL<tempR)  &&  ((tempL<0) && (tempR<0))){
+			if((sin(real_angle_c)<0.1) && (sin(real_angle_c)>-0.1)){
+				Real_cmd_v_x = C_2PIRxINv60*((tempL+tempR)/2)*fabs(cos(ANGLE_RAD_A));
+								printf("%d:Real_cmd_v_x 441 %f %f %f %f %f\n", osKernelGetTickCount(), Real_cmd_v_x, tempL, tempL, sin(real_angle_i), sin(real_angle_c));
+			}
+			else{
 			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(real_angle_i)/sin(real_angle_c))*tempR)
 				+((sin(real_angle_o)/sin(real_angle_c))*tempL));
+			printf("%d:Real_cmd_v_x 442 %f\n", osKernelGetTickCount(), Real_cmd_v_x);
+			}
 		}
 
 		else if((tempL>tempR)  &&  ((tempL<0) && (tempR<0))){
+			if((sin(real_angle_c)<0.1) && (sin(real_angle_c)>-0.1)){
+				Real_cmd_v_x = C_2PIRxINv60*((tempL+tempR)/2)*fabs(cos(ANGLE_RAD_A));
+				printf("%d:Real_cmd_v_x 551 %f %f %f %f %f\n", osKernelGetTickCount(), Real_cmd_v_x, tempL, tempL, sin(real_angle_i), sin(real_angle_c));
+			}
+			else{
 			Real_cmd_v_x = (C_2PIRxINv60/2)*(((sin(real_angle_i)/sin(real_angle_c))*tempL)
 				+((sin(real_angle_o)/sin(real_angle_c))*tempR));
+			printf("%d:Real_cmd_v_x 552 %f\n", osKernelGetTickCount(), Real_cmd_v_x);
+			}
 		}
 	}
 
