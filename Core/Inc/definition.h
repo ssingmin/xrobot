@@ -18,7 +18,7 @@ enum XbotRW {
 #define LIMIT_W 70
 #define LIMIT_V 500
 
-#define ENDMODETIME 2000
+#define ENDMODETIME 1000
 
 #define STMotorID1 0
 #define STMotorID2 1
