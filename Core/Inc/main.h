@@ -73,6 +73,7 @@ void Error_Handler(void);
 #define PS_SIG4_EXTI_IRQn EXTI9_5_IRQn
 #define RS485_DE_Pin GPIO_PIN_14
 #define RS485_DE_GPIO_Port GPIOB
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

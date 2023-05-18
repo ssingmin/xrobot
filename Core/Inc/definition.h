@@ -18,7 +18,7 @@ enum XbotRW {
 #define LIMIT_W 70
 #define LIMIT_V 500
 
-#define ENDMODETIME 2000
+#define ENDMODETIME 1000
 
 #define STMotorID1 0
 #define STMotorID2 1
@@ -29,8 +29,8 @@ enum XbotRW {
 #define RPM_2 20
 
 #define PERIOD_STATUS_LED 500U
-//#define PERIOD_CANCOMM 100U
-#define PERIOD_CANCOMM 10U
+//#define PERIOD_CANCOMM 10U
+#define PERIOD_CANCOMM 20U
 #define PERIOD_STEERING 100U
 //#define PERIOD_STEERING 500U
 #define PERIOD_NP_LED 500U

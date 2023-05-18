@@ -224,7 +224,7 @@ void sendCan(uint32_t ID, int8_t *buf, uint8_t len, uint8_t ext)
 	tCan_Tx_Header.TransmitGlobalTime = DISABLE;
 
     dwTxMailBox = HAL_CAN_GetTxMailboxesFreeLevel(&hcan1);	//resolve the error situation
-
+    printf("%d: cantx \n", osKernelGetTickCount());
     if(dwTxMailBox == 0){}
     else
     {
@@ -336,6 +336,7 @@ void Tor_OnOff(uint8_t OnOff)
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *CanHandle)
 {
   /* Get RX message */
+	printf("%d: canrx \n", osKernelGetTickCount());
 	if(FLAG_RxCplt<5)
 	{
 		if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &g_tCan_Rx_Header[FLAG_RxCplt], g_uCAN_Rx_Data[FLAG_RxCplt]) != HAL_OK){while(1){;}}
