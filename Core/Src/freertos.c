@@ -269,9 +269,6 @@ void Cal_Real_cmd(void)
 	Real_cmd_v_x = C_2PIRxINv60*((tempL+tempR)/2)*fabs(cos(ANGLE_RAD_A));
 	//printf("%d:Real_cmd_v_x 11 %f %f %f %f\n", osKernelGetTickCount(), Real_cmd_v_x, tempL, tempL, cos(ANGLE_RAD_A));
 
-//	double real_angle_c;
-//	double real_angle_i;
-//	double real_angle_o;
 	}
 	else{
 		if((tempL<tempR)  &&  ((tempL>0) && (tempR>0))){
@@ -332,11 +329,12 @@ void Cal_Real_cmd(void)
 	else//mode B
 	{
 //		Real_cmd_w = (C_4PIRxINv60WB*((tempL+tempR)/2)*fabs(sin(angle_rad_c)))*1000;
+
 		if		((tempL<tempR)  &&  ((tempL>0) && (tempR>0))){Real_cmd_w = ((Real_cmd_v_x*sin(real_angle_c))/230)*1000;}
 		else if	((tempL>tempR)  &&  ((tempL>0) && (tempR>0))){Real_cmd_w = -((Real_cmd_v_x*sin(real_angle_c))/230)*1000;}
 		else if	((tempL<tempR)  &&  ((tempL<0) && (tempR<0))){Real_cmd_w = -((Real_cmd_v_x*sin(real_angle_c))/230)*1000;}
 		else if	((tempL>tempR)  &&  ((tempL<0) && (tempR<0))){Real_cmd_w = ((Real_cmd_v_x*sin(real_angle_c))/230)*1000;}
-
+		printf("%d:Real_cmd_ww 552 %d\n", osKernelGetTickCount(), (int)Real_cmd_w);
 	}
 
 	sendcanbuf[5] = (((int16_t)(Real_cmd_w)))>>8 & 0xff;
