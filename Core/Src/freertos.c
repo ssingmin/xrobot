@@ -41,7 +41,7 @@ extern TIM_HandleTypeDef htim8;
 #define VERSION_MAJOR 2
 #define VERSION_MINOR 3
 
-#define TAR_RPM	5
+#define TAR_RPM	10
 #define MS_PER_DEG	(1000/(6*TAR_RPM))
 //#define MS_PER_DEG	11.11
 #define RES_SM	100	//SM= STEERING MOTOR
@@ -170,14 +170,14 @@ const osThreadAttr_t defaultTask_attributes = {
 osThreadId_t canTaskHandle;
 const osThreadAttr_t canTask_attributes = {
   .name = "canTask",
-  .stack_size = 512 * 4,
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityRealtime1,
 };
 /* Definitions for UartComm */
 osThreadId_t UartCommHandle;
 const osThreadAttr_t UartComm_attributes = {
   .name = "UartComm",
-  .stack_size = 256 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal1,
 };
 /* Definitions for NP_LED */
@@ -205,8 +205,8 @@ const osThreadAttr_t IRQ_PSx_attributes = {
 osThreadId_t steeringtaskHandle;
 const osThreadAttr_t steeringtask_attributes = {
   .name = "steeringtask",
-  .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityNormal2,
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal1,
 };
 /* Definitions for VelStopTimer */
 osTimerId_t VelStopTimerHandle;
@@ -613,26 +613,26 @@ void StartTask02(void *argument)
 	lastTime = osKernelGetTickCount ();
   for(;;)
   {
-	//printf("%d: t02 001\n", osKernelGetTickCount());
+	printf("%d: t02 001\n", osKernelGetTickCount());
 	lastTime += PERIOD_CANCOMM;;
-	//printf("%d: t02 002\n", osKernelGetTickCount());
+	printf("%d: t02 002\n", osKernelGetTickCount());
 	osDelayUntil(lastTime);
-	//printf("%d: t02 003\n", osKernelGetTickCount());
+	printf("%d: t02 003\n", osKernelGetTickCount());
 	//osDelay(10);
 	//printf("%d: t02\n", osKernelGetTickCount());
 
 	if(FLAG_RxCplt>0)	//real time, check stdid, extid
 	{
-	//	printf("%d: t02 004\n", osKernelGetTickCount());
+		printf("%d: t02 004\n", osKernelGetTickCount());
 		while(FLAG_RxCplt>0){
-	//		printf("%d: t02 005\n", osKernelGetTickCount());
+			printf("%d: t02 005\n", osKernelGetTickCount());
 			FLAG_RxCplt--;
-	//		printf("%d: t02 006\n", osKernelGetTickCount());
+			printf("%d: t02 006\n", osKernelGetTickCount());
 			for(int i=0;i<8;i++){canbuf[i] = g_uCAN_Rx_Data[FLAG_RxCplt][i];}
-	//		printf("%d: t02 007\n", osKernelGetTickCount());
+			printf("%d: t02 007\n", osKernelGetTickCount());
 		//	printf("canbuf: %d %d %d %d %d %d %d %d\n", canbuf[0], canbuf[1], canbuf[2], canbuf[3], canbuf[4], canbuf[5], canbuf[6], canbuf[7]);
 			//printf("%dcanid: %d %d %d\n", osKernelGetTickCount(), g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].Timestamp);
-			if(g_tCan_Rx_Header[FLAG_RxCplt].StdId>g_tCan_Rx_Header[FLAG_RxCplt].ExtId){CanId = g_tCan_Rx_Header[FLAG_RxCplt].StdId;}//�????????????????체크
+			if(g_tCan_Rx_Header[FLAG_RxCplt].StdId>g_tCan_Rx_Header[FLAG_RxCplt].ExtId){CanId = g_tCan_Rx_Header[FLAG_RxCplt].StdId;}//�???????????????체크
 			else {CanId = g_tCan_Rx_Header[FLAG_RxCplt].ExtId;}
 			printf("%d: t02 008\n", osKernelGetTickCount());
 			switch(CanId)//parse
@@ -646,10 +646,10 @@ void StartTask02(void *argument)
 					Tar_cmd_v_y = (double)temp_y;
 					Tar_cmd_w = (double)temp_w;
 					torqueSW = canbuf[6];
-	//				printf("%d: t02 009 %d %d %d\n", osKernelGetTickCount(),temp_x,temp_y,temp_w);
+					printf("%d: t02 009 %d %d %d\n", osKernelGetTickCount(),temp_x,temp_y,temp_w);
 					//if(Stop_flag++>255){Stop_flag = 1;}
 					Stopflagcheck(Xbot_W, 1);
-	//				printf("%d: t02 010\n", osKernelGetTickCount());
+					printf("%d: t02 010\n", osKernelGetTickCount());
 					//printf("%d: 0x3E9:%d %d\n", osKernelGetTickCount(),Stop_flag,Pre_Stop_flag);
 					//printf("%d: Stop_flag: %d\n", osKernelGetTickCount(), Stop_flag);
 					break;
@@ -669,7 +669,7 @@ void StartTask02(void *argument)
 
 					break;
 			}
-		//	printf("%d: t02 011\n", osKernelGetTickCount());
+			printf("%d: t02 011\n", osKernelGetTickCount());
 			g_tCan_Rx_Header[FLAG_RxCplt].StdId=0;
 			g_tCan_Rx_Header[FLAG_RxCplt].ExtId=0;
 			CanId = 0;
@@ -682,16 +682,16 @@ void StartTask02(void *argument)
 	if((temp_w && (temp_x==0) && (temp_y==0)) || ( fabs((Tar_cmd_v_x*1000)/Tar_cmd_w)<LIMIT_MODE_C) ){//MODE C
 	//if(Tar_cmd_w){
 
-	//	printf("%d: t02 012 %d %d %d\n", osKernelGetTickCount(),(int)(Tar_cmd_v_x*1000),(int)(Tar_cmd_w*1000),(int)((Tar_cmd_v_x*1000)/Tar_cmd_w));
+		printf("%d: t02 012 %d %d %d\n", osKernelGetTickCount(),(int)(Tar_cmd_v_x*1000),(int)(Tar_cmd_w*1000),(int)((Tar_cmd_v_x*1000)/Tar_cmd_w));
 		if((Pre_ModeABCD!=ModeABCD) || (EndMode==0)){
 			//printf("111osTimerStart: %d, %d\n", ModeABCD, Pre_ModeABCD);
 			Pre_ModeABCD = ModeABCD;
 			Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
 			if(timerflag){
 				//printf("timerflag: %d\n", timerflag);
-	//			printf("%d: t02 013\n", osKernelGetTickCount());
+				printf("%d: t02 013\n", osKernelGetTickCount());
 				osTimerStart(EndModeDTimerHandle, ENDMODETIME);
-	//			printf("%d: t02 014\n", osKernelGetTickCount());
+				printf("%d: t02 014\n", osKernelGetTickCount());
 				timerflag = 0;
 				EndMode = 0;
 			}
@@ -700,17 +700,17 @@ void StartTask02(void *argument)
 			ModeABCD = 3;
 			Tar_cmd_v_x=0;
 			Tar_cmd_v_y=0;
-		//	printf("%d: t02 015\n", osKernelGetTickCount());
+			printf("%d: t02 015\n", osKernelGetTickCount());
 			Tar_cmd_FL = -1*((Tar_cmd_w*CONSTANT_C_AxC_V)/SIGNIFICANT_FIGURES);
 
 			if(Tar_cmd_FL>LIMIT_W){Tar_cmd_FL=LIMIT_W;}
 			if(Tar_cmd_FL<-LIMIT_W){Tar_cmd_FL=-LIMIT_W;}
 			Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL;
-	//		printf("%d: t02 016\n", osKernelGetTickCount());
+			printf("%d: t02 016\n", osKernelGetTickCount());
 			for(int i=0;i<4;i++){Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL), i);}
-	//		printf("%d: t02 017\n", osKernelGetTickCount());
+			printf("%d: t02 017\n", osKernelGetTickCount());
 			Cal_Real_cmd();
-	//		printf("%d: t02 018\n", osKernelGetTickCount());
+			printf("%d: t02 018\n", osKernelGetTickCount());
 		}
 	}
 
@@ -755,9 +755,9 @@ void StartTask02(void *argument)
 
 	//else if(Tar_cmd_v_x && (Tar_cmd_w!=0)){
 		else {	//mode2
-	//		printf("%d: t02 019\n", osKernelGetTickCount());
+			printf("%d: t02 019\n", osKernelGetTickCount());
 			if((Pre_ModeABCD!=ModeABCD) || (EndMode==0)){
-	//			printf("%d: t02 020\n", osKernelGetTickCount());
+				printf("%d: t02 020\n", osKernelGetTickCount());
 				//printf("%d:111osTimerStart: %d, %d, %d\n", osKernelGetTickCount(), ModeABCD, Pre_ModeABCD, EndMode);
 				Pre_ModeABCD = ModeABCD;
 				Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
@@ -767,10 +767,10 @@ void StartTask02(void *argument)
 									SteDeg[0]*100, SteDeg[1]*100, SteDeg[2]*100, SteDeg[3]*100, (int)(angle_rad_i*1000), (int)(angle_rad_o*1000),
 									SAngle[0],SAngle[1],SAngle[2],SAngle[3], temp_x, temp_y, temp_w);
 				if(timerflag){
-	//				printf("%d: t02 021\n", osKernelGetTickCount());
+					printf("%d: t02 021\n", osKernelGetTickCount());
 					//printf("timerflag: %d\n", timerflag);
 					osTimerStart(EndModeDTimerHandle, ENDMODETIME);
-		//			printf("%d: t02 022\n", osKernelGetTickCount());
+					printf("%d: t02 022\n", osKernelGetTickCount());
 					timerflag = 0;
 					EndMode = 0;
 					printf("%d:send angle3 %d %d %d %d %d %d %d %d %d %d %d %d %d\n", osKernelGetTickCount(),
@@ -783,14 +783,14 @@ void StartTask02(void *argument)
 			//printf("%d:222osTimerStart: %d, %d, %d\n", osKernelGetTickCount(), ModeABCD, Pre_ModeABCD, EndMode);
 			if(Tar_cmd_v_x>LIMIT_V){Tar_cmd_v_x=LIMIT_V;}
 			if(Tar_cmd_v_x<-LIMIT_V){Tar_cmd_v_x=-LIMIT_V;}
-		//	printf("%d: t02 023\n", osKernelGetTickCount());
+			printf("%d: t02 023\n", osKernelGetTickCount());
 			//if((sin(real_angle_c)<0.1) && (sin(real_angle_c)>-0.1)){
 //			if((Tar_cmd_v_x<0.1) && (Tar_cmd_v_x>-0.1)){
 //				angle_rad_c = 1;
 //
 //			}
 //			else { angle_rad_c = fabs(asin(((230*Tar_cmd_w) / (Tar_cmd_v_x*1000)))); }
-	//		printf("%d: t02 024\n", osKernelGetTickCount());
+			printf("%d: t02 024\n", osKernelGetTickCount());
 			angle_rad_c = fabs(asin(((230*Tar_cmd_w) / (Tar_cmd_v_x*1000))));
 
 			angle_rad_i = fabs(atan2(230,(230 / tan(angle_rad_c))-209.5));
@@ -799,12 +799,12 @@ void StartTask02(void *argument)
 			Tar_cmd_v_i = (Tar_cmd_v_x*sin(angle_rad_c)) / sin(angle_rad_i);
 			Tar_cmd_v_o = (Tar_cmd_v_x*sin(angle_rad_c)) / sin(angle_rad_o);
 
-	//		printf("%d: t02 025\n", osKernelGetTickCount());
+			printf("%d: t02 025\n", osKernelGetTickCount());
 			printf("%d:send angle1 %d %d %d %d %d %d %d %d %d %d %d %d %d\n", osKernelGetTickCount(),
 								SteDeg[0]*100, SteDeg[1]*100, SteDeg[2]*100, SteDeg[3]*100, (int)(angle_rad_i*1000), (int)(angle_rad_o*1000),
 								SAngle[0],SAngle[1],SAngle[2],SAngle[3], temp_x, temp_y, temp_w);
 			if(temp_w==0){
-	//			printf("%d: t02 026\n", osKernelGetTickCount());
+				printf("%d: t02 026\n", osKernelGetTickCount());
 				Tar_cmd_v_i=Tar_cmd_v_o=Tar_cmd_v_x;
 				angle_rad_i=angle_rad_o=angle_rad_c=0;
 
@@ -812,7 +812,7 @@ void StartTask02(void *argument)
 				Tar_cmd_RL = (int16_t)(C_60xINv2PIR * Tar_cmd_v_i);
 				Tar_cmd_FR = -(int16_t)(C_60xINv2PIR * Tar_cmd_v_o);
 				Tar_cmd_RR = -(int16_t)(C_60xINv2PIR * Tar_cmd_v_o);
-	//			printf("%d: t02 027\n", osKernelGetTickCount());
+				printf("%d: t02 027\n", osKernelGetTickCount());
 				Deg2Ste(Xbot_W,0, STMotorID1);
 				Deg2Ste(Xbot_W,0, STMotorID2);
 				Deg2Ste(Xbot_W,0, STMotorID3);
@@ -821,7 +821,7 @@ void StartTask02(void *argument)
 			}
 
 			if((temp_w>0) && (temp_x>0)){
-		//		printf("%d: t02 029\n", osKernelGetTickCount());
+				printf("%d: t02 029\n", osKernelGetTickCount());
 				Tar_cmd_FL = (int16_t)(C_60xINv2PIR * Tar_cmd_v_i);
 				Tar_cmd_RL = (int16_t)(C_60xINv2PIR * Tar_cmd_v_i);
 				Tar_cmd_FR = -(int16_t)(C_60xINv2PIR * Tar_cmd_v_o);
@@ -831,40 +831,40 @@ void StartTask02(void *argument)
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_i), STMotorID2);
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_o), STMotorID3);
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_i), STMotorID4);
-	//			printf("%d: t02 030\n", osKernelGetTickCount());
+				printf("%d: t02 030\n", osKernelGetTickCount());
 
 			}
 
 			else if((temp_w<0) && (temp_x>0)){
-	//			printf("%d: t02 031\n", osKernelGetTickCount());
+				printf("%d: t02 031\n", osKernelGetTickCount());
 				Tar_cmd_FL = (int16_t)(C_60xINv2PIR * Tar_cmd_v_o);
 				Tar_cmd_RL = (int16_t)(C_60xINv2PIR * Tar_cmd_v_o);
 				Tar_cmd_FR = -(int16_t)(C_60xINv2PIR * Tar_cmd_v_i);
 				Tar_cmd_RR = -(int16_t)(C_60xINv2PIR * Tar_cmd_v_i);
-	//			printf("%d: t02 032\n", osKernelGetTickCount());
+				printf("%d: t02 032\n", osKernelGetTickCount());
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_i), STMotorID1);
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_o), STMotorID2);
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_i), STMotorID3);
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_o), STMotorID4);
-	//			printf("%d: t02 033\n", osKernelGetTickCount());
+				printf("%d: t02 033\n", osKernelGetTickCount());
 			}
 
 			else if((temp_w>0) && (temp_x<0)){
-	//			printf("%d: t02 034\n", osKernelGetTickCount());
+				printf("%d: t02 034\n", osKernelGetTickCount());
 				Tar_cmd_FL = (int16_t)(C_60xINv2PIR * Tar_cmd_v_o);
 				Tar_cmd_RL = (int16_t)(C_60xINv2PIR * Tar_cmd_v_o);
 				Tar_cmd_FR = -(int16_t)(C_60xINv2PIR * Tar_cmd_v_i);
 				Tar_cmd_RR = -(int16_t)(C_60xINv2PIR * Tar_cmd_v_i);
-	//			printf("%d: t02 035\n", osKernelGetTickCount());
+				printf("%d: t02 035\n", osKernelGetTickCount());
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_i), STMotorID1);
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_o), STMotorID2);
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_i), STMotorID3);
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_o), STMotorID4);
-	//			printf("%d: t02 036\n", osKernelGetTickCount());
+				printf("%d: t02 036\n", osKernelGetTickCount());
 			}
 
 			else if((temp_w<0) && (temp_x<0)){
-	//			printf("%d: t02 037\n", osKernelGetTickCount());
+				printf("%d: t02 037\n", osKernelGetTickCount());
 				Tar_cmd_FL = (int16_t)(C_60xINv2PIR * Tar_cmd_v_i);
 				Tar_cmd_RL = (int16_t)(C_60xINv2PIR * Tar_cmd_v_i);
 				Tar_cmd_FR = -(int16_t)(C_60xINv2PIR * Tar_cmd_v_o);
@@ -874,7 +874,7 @@ void StartTask02(void *argument)
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_i), STMotorID2);
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_o), STMotorID3);
 				Deg2Ste(Xbot_W,rad2deg(angle_rad_i), STMotorID4);
-	//			printf("%d: t02 038\n", osKernelGetTickCount());
+				printf("%d: t02 038\n", osKernelGetTickCount());
 			}
 
 			ModeABCD = 2;//B mode
@@ -882,20 +882,20 @@ void StartTask02(void *argument)
 
 
 		Cal_Real_cmd();
-//		printf("%d: t02 039\n", osKernelGetTickCount());
+		printf("%d: t02 039\n", osKernelGetTickCount());
 	}
 
 	if(((temp_x==0) && (temp_y==0) && (temp_w==0))  ||  (Stopflagcheck(Xbot_R, 1)==0))
 	{
-//		printf("%d: t02 040\n", osKernelGetTickCount());
+		printf("%d: t02 040\n", osKernelGetTickCount());
 		ModeABCD = 4;//temp
 		Pre_ModeABCD = 4;//temp
 		Tar_cmd_RR = Tar_cmd_RL = Tar_cmd_FR = Tar_cmd_FL=0;
 
 		//for(int i=0;i<4;i++){Deg2Ste(Xbot_W,rad2deg(ANGLE_VEL), i);}
-	//	printf("%d: t02 041\n", osKernelGetTickCount());
+		printf("%d: t02 041\n", osKernelGetTickCount());
 		Cal_Real_cmd();
-//		printf("%d: t02 042\n", osKernelGetTickCount());
+		printf("%d: t02 042\n", osKernelGetTickCount());
 	}
 
 
@@ -1339,8 +1339,7 @@ void StartTask07(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	lastTime += 50;//temp
-
+	lastTime += PERIOD_STEERING;
 	osDelayUntil(lastTime);
 
 	for(int k=0;k<4;k++){//copy data to buffer
