@@ -50,7 +50,7 @@ void ServoMotor_init()
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-
+	printf("%d:HURC\n", osKernelGetTickCount());
 	if (huart->Instance == USART3) {
 		if(rx_i == 3){
 			rx_i=-1;

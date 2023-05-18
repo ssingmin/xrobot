@@ -170,14 +170,14 @@ const osThreadAttr_t defaultTask_attributes = {
 osThreadId_t canTaskHandle;
 const osThreadAttr_t canTask_attributes = {
   .name = "canTask",
-  .stack_size = 256 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityRealtime1,
 };
 /* Definitions for UartComm */
 osThreadId_t UartCommHandle;
 const osThreadAttr_t UartComm_attributes = {
   .name = "UartComm",
-  .stack_size = 128 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal1,
 };
 /* Definitions for NP_LED */
@@ -205,8 +205,8 @@ const osThreadAttr_t IRQ_PSx_attributes = {
 osThreadId_t steeringtaskHandle;
 const osThreadAttr_t steeringtask_attributes = {
   .name = "steeringtask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal1,
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityHigh7,
 };
 /* Definitions for VelStopTimer */
 osTimerId_t VelStopTimerHandle;
@@ -334,7 +334,8 @@ void Cal_Real_cmd(void)
 		else if	((tempL>tempR)  &&  ((tempL>0) && (tempR>0))){Real_cmd_w = -((Real_cmd_v_x*sin(real_angle_c))/230)*1000;}
 		else if	((tempL<tempR)  &&  ((tempL<0) && (tempR<0))){Real_cmd_w = -((Real_cmd_v_x*sin(real_angle_c))/230)*1000;}
 		else if	((tempL>tempR)  &&  ((tempL<0) && (tempR<0))){Real_cmd_w = ((Real_cmd_v_x*sin(real_angle_c))/230)*1000;}
-		printf("%d:Real_cmd_ww 552 %d\n", osKernelGetTickCount(), (int)Real_cmd_w);
+		printf("%d:Real_cmd_ww 552 %d %d %d %d %d\n", osKernelGetTickCount(),
+				(int)Real_cmd_w, (int )Real_cmd_v_x, (int)(real_angle_c*1000), (int)(real_angle_i*1000), (int)(real_angle_o*1000));
 	}
 
 	sendcanbuf[5] = (((int16_t)(Real_cmd_w)))>>8 & 0xff;
@@ -630,7 +631,7 @@ void StartTask02(void *argument)
 			printf("%d: t02 007\n", osKernelGetTickCount());
 		//	printf("canbuf: %d %d %d %d %d %d %d %d\n", canbuf[0], canbuf[1], canbuf[2], canbuf[3], canbuf[4], canbuf[5], canbuf[6], canbuf[7]);
 			//printf("%dcanid: %d %d %d\n", osKernelGetTickCount(), g_tCan_Rx_Header[FLAG_RxCplt].StdId, g_tCan_Rx_Header[FLAG_RxCplt].ExtId, g_tCan_Rx_Header[FLAG_RxCplt].Timestamp);
-			if(g_tCan_Rx_Header[FLAG_RxCplt].StdId>g_tCan_Rx_Header[FLAG_RxCplt].ExtId){CanId = g_tCan_Rx_Header[FLAG_RxCplt].StdId;}//�???????????????체크
+			if(g_tCan_Rx_Header[FLAG_RxCplt].StdId>g_tCan_Rx_Header[FLAG_RxCplt].ExtId){CanId = g_tCan_Rx_Header[FLAG_RxCplt].StdId;}//�????????????????체크
 			else {CanId = g_tCan_Rx_Header[FLAG_RxCplt].ExtId;}
 			printf("%d: t02 008\n", osKernelGetTickCount());
 			switch(CanId)//parse
@@ -1337,9 +1338,10 @@ void StartTask07(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	printf("%d: t071\n", osKernelGetTickCount());
 	lastTime += PERIOD_STEERING;
 	osDelayUntil(lastTime);
-
+	printf("%d: t073\n", osKernelGetTickCount());
 	for(int k=0;k<4;k++){//copy data to buffer
 		for(int i=0;i<12;i++){
 			if(tmp_rx[k][i]==0xFF && tmp_rx[k][i+1]==0xFE)//parsing
@@ -1354,7 +1356,7 @@ void StartTask07(void *argument)
 		}
 	}
 
-	printf("%d: t07\n", osKernelGetTickCount());
+	printf("%d: t072\n", osKernelGetTickCount());
 	if(flag_rx == 1){
 
 		for(int i=0;i<SERVO_RXBUFLEN;i++){printf("%02x ", tmparr[0][i]);} printf("\n");

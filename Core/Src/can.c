@@ -224,7 +224,7 @@ void sendCan(uint32_t ID, int8_t *buf, uint8_t len, uint8_t ext)
 	tCan_Tx_Header.TransmitGlobalTime = DISABLE;
 
     dwTxMailBox = HAL_CAN_GetTxMailboxesFreeLevel(&hcan1);	//resolve the error situation
-    printf("%d: cantx \n", osKernelGetTickCount());
+    //printf("%d: cantx \n", osKernelGetTickCount());
     if(dwTxMailBox == 0){}
     else
     {
